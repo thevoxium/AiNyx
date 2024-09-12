@@ -1,0 +1,236 @@
+body {
+    font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 0;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+}
+
+#app {
+    display: flex;
+    height: 100vh;
+}
+
+#sidebar {
+    width: 250px;
+    min-width: 150px;
+    max-width: 50%;
+    background-color: #252526;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #454545;
+}
+
+#directory-browser {
+    padding: 10px;
+    border-bottom: 1px solid #454545;
+}
+
+#directory-browser h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+#current-path {
+    font-size: 0.8em;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+    padding: 5px;
+    background-color: #333333;
+    border-radius: 3px;
+}
+
+#directory-list, #file-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#directory-list div, #file-list div {
+    cursor: pointer;
+    padding: 5px;
+    margin: 2px 0;
+    border-radius: 3px;
+}
+
+#directory-list div:hover, #file-list div:hover {
+    background-color: #2a2d2e;
+}
+
+#file-list h2 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    padding-left: 10px;
+}
+
+#editor-container {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+#tabs-container {
+    display: flex;
+    background-color: #2d2d2d;
+    border-bottom: 1px solid #454545;
+    overflow-x: auto;
+}
+
+.tab {
+    padding: 5px 10px;
+    background-color: #2d2d2d;
+    border-right: 1px solid #454545;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+.tab.active {
+    background-color: #1e1e1e;
+}
+
+.close-tab {
+    margin-left: 5px;
+    font-size: 14px;
+    color: #999;
+}
+
+.close-tab:hover {
+    color: #fff;
+}
+
+#editor {
+    flex-grow: 1;
+    width: 100% !important;
+}
+
+#button-container {
+    padding: 10px;
+    background-color: #252526;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #454545;
+}
+
+button {
+    margin-right: 10px;
+    padding: 5px 10px;
+    background-color: #0e639c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #1177bb;
+}
+
+#save-notification {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    display: none;
+    font-size: 14px;
+}
+
+#save-notification.success {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#save-notification.error {
+    background-color: #f44336;
+    color: white;
+}
+
+#io-container {
+    width: 300px;
+    min-width: 150px;
+    max-width: 50%;
+    display: flex;
+    flex-direction: column;
+    background-color: #252526;
+    border-left: 1px solid #454545;
+}
+
+#input, #output {
+    padding: 10px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#input h2, #output h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+#input-area {
+    flex-grow: 1;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    border: 1px solid #454545;
+    padding: 5px;
+    font-family: 'Courier New', monospace;
+    resize: none;
+}
+
+#output-area {
+    flex-grow: 1;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    border: 1px solid #454545;
+    padding: 5px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-y: auto;
+}
+
+.resizer {
+    width: 5px;
+    background: #2b2b2b;
+    cursor: col-resize;
+    transition: background 0.2s;
+}
+
+.resizer:hover {
+    background: #4a4a4a;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Ensure the tabs container scrolls horizontally if needed */
+#tabs-container::-webkit-scrollbar {
+    height: 5px;
+}
+
+#tabs-container::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+#tabs-container::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
