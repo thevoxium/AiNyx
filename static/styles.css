@@ -555,3 +555,53 @@ body {
 }
 
 /* ... (rest of the existing styles) ... */
+
+
+
+.btn-browse {
+    background: linear-gradient(to right, #4a5568, #2d3748);
+}
+
+.btn-browse:hover {
+    background: linear-gradient(to right, #2d3748, #1a202c);
+}
+
+
+#directory-browser .button-container {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.btn-browse {
+    background: linear-gradient(to right, #4a5568, #2d3748);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.btn-browse:hover {
+    background: linear-gradient(to right, #2d3748, #1a202c);
+}
+
+.btn-browse .icon {
+    margin-right: 8px;
+}
+
+#current-path {
+    margin-top: 10px;
+    word-wrap: break-word;
+    padding: 5px;
+    background-color: #2d3748;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+#directory-list, #file-list {
+    margin-top: 10px;
+}

@@ -12,8 +12,9 @@ import termios
 import struct
 import fcntl
 import logging
-
-
+import tkinter as tk
+from tkinter import filedialog
+from browse import DirectorySelector
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a real secret key
@@ -28,22 +29,54 @@ client = OpenAI(
 def index():
     return render_template('index.html')
 
-@app.route('/browse', methods=['GET'])
+
+@app.route('/browse_directory', methods=['GET'])
 def browse_directory():
-    path = request.args.get('path', '/')
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    #dialog = DirectorySelector(root) # Open the directory selection dialog
+    directory = filedialog.askdirectory()
+    #root.wait_window(dialog.top)
+    #directory = dialog.result
+    root.destroy()  # Close the Tkinter instance
+
+    
+    if directory:
+        try:
+            items = os.listdir(directory)
+            directories = [d for d in items if os.path.isdir(os.path.join(directory, d))]
+            files = [f for f in items if os.path.isfile(os.path.join(directory, f))]
+            session['current_directory'] = directory
+            return jsonify({
+                "status": "success",
+                "current_path": directory,
+                "directories": directories,
+                "files": files
+            })
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)})
+    else:
+        return jsonify({"status": "cancelled"})
+
+@app.route('/file/<path:filename>')
+def get_file_content(filename):
+    directory = session.get('current_directory', '')
+    if not directory:
+        return jsonify({"status": "error", "message": "No directory selected"})
+    
+    file_path = os.path.join(directory, filename)
+    if not os.path.isfile(file_path):
+        return jsonify({"status": "error", "message": f"File not found: {file_path}"})
+    
     try:
-        items = os.listdir(path)
-        directories = [d for d in items if os.path.isdir(os.path.join(path, d))]
-        files = [f for f in items if os.path.isfile(os.path.join(path, f))]
-        session['current_directory'] = path  # Add this line
-        return jsonify({
-            "status": "success",
-            "current_path": path,
-            "directories": directories,
-            "files": files
-        })
+        with open(file_path, 'r') as file:
+            content = file.read()
+        return jsonify({"status": "success", "content": content})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+
+
 
 @app.route('/select_directory', methods=['POST'])
 def select_directory():
@@ -63,22 +96,7 @@ def get_files():
     files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
     return jsonify({"status": "success", "files": files})
 
-@app.route('/file/<path:filename>')
-def get_file_content(filename):
-    directory = session.get('current_directory', '')
-    if not directory:
-        return jsonify({"status": "error", "message": "No directory selected"})
-    
-    file_path = os.path.join(directory, filename)
-    if not os.path.isfile(file_path):
-        file_path = filename  # If not found, assume it's a full path
-    
-    try:
-        with open(file_path, 'r') as file:
-            content = file.read()
-        return jsonify({"status": "success", "content": content})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+
 
 @app.route('/save', methods=['POST'])
 def save_file():

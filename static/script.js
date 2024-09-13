@@ -432,6 +432,7 @@ const PROMPT = '$ ';
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeTerminal();
+    createBrowseDirectoryButton();
 });
 
 
@@ -514,10 +515,61 @@ function toggleTerminal() {
 
 
 
+function browseDirectory() {
+    fetch('/browse_directory')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateDirectoryBrowser(data);
+            } else if (data.status === 'cancelled') {
+                console.log('Directory selection cancelled');
+            } else {
+                showNotification('Error browsing directory: ' + data.message, 'error');
+            }
+        });
+}
+
+function updateDirectoryBrowser(data) {
+    const directoryList = document.getElementById('directory-list');
+    const currentPathElement = document.getElementById('current-path');
+    
+    currentPathElement.textContent = data.current_path;
+    directoryList.innerHTML = '';
+
+    data.directories.forEach(dir => {
+        const dirElement = document.createElement('div');
+        dirElement.textContent = dir;
+        dirElement.onclick = () => loadFile(dir);
+        directoryList.appendChild(dirElement);
+    });
+
+    data.files.forEach(file => {
+        const fileElement = document.createElement('div');
+        fileElement.textContent = file;
+        fileElement.onclick = () => loadFile(file);
+        directoryList.appendChild(fileElement);
+    });
+}
+
+function loadFile(filename) {
+    fetch(`/file/${encodeURIComponent(filename)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                openFiles[filename] = data.content;
+                openFileTab(filename, data.content);
+            } else {
+                showNotification('Error loading file: ' + data.message, 'error');
+            }
+        });
+}
+
+
+
+
 document.getElementById('chat-input-area').addEventListener('keypress', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
     }
 });
-
