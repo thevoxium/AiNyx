@@ -1,13 +1,18 @@
 from flask import Flask, render_template, request, jsonify, session
+from flask_socketio import SocketIO, emit
 import os
 import subprocess
 import tempfile
 from openai import OpenAI
 import markdown
 import psutil
+import pty
+import select
+import termios
+import struct
+import fcntl
 import logging
-import GPUtil
-from flask_socketio import SocketIO, emit
+
 
 
 app = Flask(__name__)
@@ -180,19 +185,29 @@ def hardware_stats():
 
 
 
-@socketio.on('run_command')
+@socketio.on('connect', namespace='/terminal')
+def terminal_connect():
+    print('Client connected to terminal')
+
+@socketio.on('disconnect', namespace='/terminal')
+def terminal_disconnect():
+    print('Client disconnected from terminal')
+
+@socketio.on('command', namespace='/terminal')
 def handle_command(command):
+    print(f'Received command: {command}')
     try:
-        # Run the command on the server and capture the output
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        output, error = process.communicate()
-        
-        if output:
-            emit('command_output', {'data': output})
-        if error:
-            emit('command_output', {'data': error})
+        # Execute the command
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
+        output = result.stdout + result.stderr
+        if not output:
+            output = f"Command executed: {command}\n"
+    except subprocess.TimeoutExpired:
+        output = "Command execution timed out\n"
     except Exception as e:
-        emit('command_output', {'data': str(e)})
+        output = f"Error executing command: {str(e)}\n"
+    
+    emit('output', output)
 
 if __name__ == '__main__':
-    socketio.run(app, debug = True)
+    socketio.run(app, debug=True)

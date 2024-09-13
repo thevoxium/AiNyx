@@ -473,4 +473,85 @@ body {
     flex-grow: 1;
 }
 
+
+/* ... (existing styles) ... */
+
+#terminal-container {
+    width: 40%;
+    min-width: 300px;
+    max-width: 600px;
+    height: 100%;
+    background-color: #1e1e1e;
+    border-left: 1px solid #3c3c3c;
+    display: none;
+    flex-direction: column;
+}
+
+#terminal {
+    flex-grow: 1;
+    padding: 10px;
+}
+
+.xterm {
+    padding: 10px;
+}
+
+.btn-terminal {
+    background: linear-gradient(to right, #4a5568, #2d3748);
+}
+
+.btn-terminal:hover {
+    background: linear-gradient(to right, #2d3748, #1a202c);
+}
+
+/* Adjust the layout to accommodate the new container */
+#editor-container {
+    width: calc(100% - 250px - 40%); /* Adjust based on sidebar and terminal widths */
+}
+
+/* ... (rest of the existing styles) ... */
+
+
+/* ... (existing styles) ... */
+
+#terminal-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+#terminal {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.xterm {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.xterm-viewport, .xterm-screen {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+
+.btn-terminal {
+    background: linear-gradient(to right, #4a5568, #2d3748);
+}
+
+.btn-terminal:hover {
+    background: linear-gradient(to right, #2d3748, #1a202c);
+}
+
+/* Adjust the layout to accommodate the new container */
+#editor-container {
+    width: calc(100% - 250px - 40%); /* Adjust based on sidebar and terminal widths */
+}
+
 /* ... (rest of the existing styles) ... */

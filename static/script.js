@@ -237,9 +237,13 @@ function initializeResizers() {
     const editorContainer = document.getElementById('editor-container');
     const ioContainer = document.getElementById('io-container');
     const chatContainer = document.getElementById('chat-container');
+    const terminalContainer = document.getElementById('terminal-container');
     const resizer1 = document.getElementById('resizer-1');
     const resizer2 = document.getElementById('resizer-2');
     const resizer3 = document.getElementById('resizer-3');
+    const resizer4 = document.getElementById('resizer-4');
+
+    const minWidth = 100; // Minimum width for any container
 
     let isResizing = false;
     let currentResizer;
@@ -254,20 +258,34 @@ function initializeResizers() {
     function resize(e) {
         if (!isResizing) return;
 
+        const containerWidth = window.innerWidth;
+
         if (currentResizer === resizer1) {
-            const newSidebarWidth = e.clientX;
+            const newSidebarWidth = Math.max(minWidth, e.clientX);
             sidebar.style.width = `${newSidebarWidth}px`;
+            editorContainer.style.width = `${containerWidth - newSidebarWidth - ioContainer.offsetWidth - chatContainer.offsetWidth - terminalContainer.offsetWidth}px`;
         } else if (currentResizer === resizer2) {
-            const newIoContainerWidth = window.innerWidth - e.clientX;
+            const newIoContainerWidth = Math.max(minWidth, containerWidth - e.clientX - chatContainer.offsetWidth - terminalContainer.offsetWidth);
             ioContainer.style.width = `${newIoContainerWidth}px`;
-        }else if (currentResizer === resizer3){
-            const chatContainerWidth = window.innerWidth - e.clientX;
-            chatContainer.style.width = `${chatContainerWidth}px`;
+            editorContainer.style.width = `${containerWidth - sidebar.offsetWidth - newIoContainerWidth - chatContainer.offsetWidth - terminalContainer.offsetWidth}px`;
+        } else if (currentResizer === resizer3) {
+            const newChatContainerWidth = Math.max(minWidth, containerWidth - e.clientX - terminalContainer.offsetWidth);
+            chatContainer.style.width = `${newChatContainerWidth}px`;
+            editorContainer.style.width = `${containerWidth - sidebar.offsetWidth - ioContainer.offsetWidth - newChatContainerWidth - terminalContainer.offsetWidth}px`;
+        } else if (currentResizer === resizer4) {
+            const newTerminalContainerWidth = Math.max(minWidth, containerWidth - e.clientX);
+            terminalContainer.style.width = `${newTerminalContainerWidth}px`;
+            editorContainer.style.width = `${containerWidth - sidebar.offsetWidth - ioContainer.offsetWidth - chatContainer.offsetWidth - newTerminalContainerWidth}px`;
         }
 
         // Ensure the Monaco editor resizes properly
         if (editor) {
             editor.layout();
+        }
+
+        // Resize the terminal if it exists
+        if (terminal) {
+            terminal.fit();
         }
     }
 
@@ -280,6 +298,7 @@ function initializeResizers() {
     resizer1.addEventListener('mousedown', (e) => startResize(e, resizer1));
     resizer2.addEventListener('mousedown', (e) => startResize(e, resizer2));
     resizer3.addEventListener('mousedown', (e) => startResize(e, resizer3));
+    resizer4.addEventListener('mousedown', (e) => startResize(e, resizer4));
 }
 
 function toggleChat() {
@@ -404,6 +423,93 @@ document.addEventListener('visibilitychange', () => {
         setInterval(updateHardwareStats, 5000);
     }
 });
+
+
+let terminal;
+let socket;
+let currentLine = '';
+const PROMPT = '$ ';
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTerminal();
+});
+
+
+function initializeTerminal() {
+    terminal = new Terminal({
+        cursorBlink: true,
+        scrollback: 1000,
+        cols: 80,
+        rows: 24
+    });
+    terminal.open(document.getElementById('terminal'));
+    
+    // Initialize Socket.IO
+    socket = io('/terminal');
+
+    socket.on('connect', function() {
+        console.log('Socket connected');
+        terminal.write('\r\n*** Connected to terminal ***\r\n');
+        writePrompt();
+    });
+
+    socket.on('output', function(data) {
+        console.log('Received output:', data);
+        terminal.write(data);
+        writePrompt();
+    });
+
+    socket.on('disconnect', function() {
+        console.log('Socket disconnected');
+        terminal.write('\r\n*** Disconnected from terminal ***\r\n');
+    });
+
+    terminal.onKey(function(ev) {
+        const printable = !ev.domEvent.altKey && !ev.domEvent.ctrlKey && !ev.domEvent.metaKey;
+
+        if (ev.domEvent.keyCode === 13) { // Enter key
+            terminal.write('\r\n');
+            if (currentLine.trim().length > 0) {
+                sendCommand(currentLine);
+                currentLine = '';
+            } else {
+                writePrompt();
+            }
+        } else if (ev.domEvent.keyCode === 8) { // Backspace
+            if (currentLine.length > 0) {
+                currentLine = currentLine.slice(0, -1);
+                terminal.write('\b \b');
+            }
+        } else if (printable) {
+            currentLine += ev.key;
+            terminal.write(ev.key);
+        }
+    });
+
+    terminal.focus();
+}
+
+function writePrompt() {
+    terminal.write('\r\n' + PROMPT);
+    currentLine = '';
+}
+
+function sendCommand(command) {
+    console.log('Sending command:', command);
+    socket.emit('command', command);
+}
+
+function toggleTerminal() {
+    const terminalContainer = document.getElementById('terminal-container');
+    const ioContainer = document.getElementById('io-container');
+    if (terminalContainer.style.display === 'none') {
+        terminalContainer.style.display = 'flex';
+        terminal.focus();
+        ioContainer.style.display = 'none';
+    } else {
+        terminalContainer.style.display = 'none';
+    }
+}
 
 
 
