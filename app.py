@@ -7,9 +7,12 @@ import markdown
 import psutil
 import logging
 import GPUtil
+from flask_socketio import SocketIO, emit
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a real secret key
+socketio = SocketIO(app)
 # Configure OpenAI API
 client = OpenAI(                                                                                               
         base_url="https://openrouter.ai/api/v1",                                                                   
@@ -177,7 +180,19 @@ def hardware_stats():
 
 
 
+@socketio.on('run_command')
+def handle_command(command):
+    try:
+        # Run the command on the server and capture the output
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        output, error = process.communicate()
+        
+        if output:
+            emit('command_output', {'data': output})
+        if error:
+            emit('command_output', {'data': error})
+    except Exception as e:
+        emit('command_output', {'data': str(e)})
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    app.run(debug=True)
+    socketio.run(app, debug = True)
