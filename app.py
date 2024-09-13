@@ -4,6 +4,9 @@ import subprocess
 import tempfile
 from openai import OpenAI
 import markdown
+import psutil
+import logging
+import GPUtil
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a real secret key
@@ -154,5 +157,27 @@ def chat():
         return jsonify({"status": "error", "message": str(e)})
 
 
+
+@app.route('/hardware_stats')
+def hardware_stats():
+    cpu_usage = psutil.cpu_percent()
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+
+    stats = {
+        'cpu_usage': round(cpu_usage, 1),
+        'memory_used': round(memory.used / (1024**3), 1),
+        'memory_total': round(memory.total / (1024**3), 1),
+        'disk_used': round(disk.used / (1024**3), 1),
+        'disk_total': round(disk.total / (1024**3), 1)
+    }
+    
+    logging.info(f"Hardware stats: {stats}")
+    return jsonify(stats)
+
+
+
+
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     app.run(debug=True)

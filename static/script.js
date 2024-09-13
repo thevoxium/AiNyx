@@ -353,10 +353,65 @@ function addMessageToChat(sender, content) {
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-// Add event listener for "Enter" key in chat input
+
+
+
+
+
+
+
+function updateHardwareStats() {
+    fetch('/hardware_stats')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Received hardware stats:", data);
+            
+            const cpuElement = document.querySelector('#cpu-usage span');
+            const memoryElement = document.querySelector('#memory-usage span');
+            const diskElement = document.querySelector('#disk-usage span');
+            
+            if (cpuElement && memoryElement && diskElement) {
+                cpuElement.textContent = `${data.cpu_usage}%`;
+                memoryElement.textContent = `${data.memory_used}/${data.memory_total}GB`;
+                diskElement.textContent = `${data.disk_used}/${data.disk_total}GB`;
+                console.log("Updated DOM with new stats");
+            } else {
+                console.error("One or more DOM elements not found");
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching hardware stats:', error);
+        });
+}
+
+// Update hardware stats every 5 seconds
+const statsInterval = setInterval(updateHardwareStats, 5000);
+
+// Call updateHardwareStats immediately to populate initial values
+updateHardwareStats();
+
+// Add this function to stop updating stats when the page is hidden
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        clearInterval(statsInterval);
+    } else {
+        updateHardwareStats();
+        setInterval(updateHardwareStats, 5000);
+    }
+});
+
+
+
+
 document.getElementById('chat-input-area').addEventListener('keypress', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
     }
 });
+

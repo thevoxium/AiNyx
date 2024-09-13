@@ -427,3 +427,50 @@ body {
     content: attr(placeholder);
     color: #6b7280;
 }
+
+
+/* ... (existing styles) ... */
+
+#footer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #252526;
+    border-top: 1px solid #3c3c3c;
+}
+
+#button-container {
+    display: flex;
+    align-items: center;
+}
+
+#hardware-stats-container {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #d4d4d4;
+}
+
+#hardware-stats-container span {
+    margin-left: 15px;
+}
+
+#hardware-stats-container span span {
+    font-weight: bold;
+    color: #4CAF50;
+    margin-left: 5px;
+}
+
+/* Adjust the layout to accommodate the new footer */
+#editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#editor {
+    flex-grow: 1;
+}
+
+/* ... (rest of the existing styles) ... */
