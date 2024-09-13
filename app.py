@@ -2,9 +2,16 @@ from flask import Flask, render_template, request, jsonify, session
 import os
 import subprocess
 import tempfile
+from openai import OpenAI
+import markdown
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a real secret key
+# Configure OpenAI API
+client = OpenAI(                                                                                               
+        base_url="https://openrouter.ai/api/v1",                                                                   
+        api_key=os.environ.get("OPEN_ROUTER_KEY"),                                                                                           
+    )  
 
 @app.route('/')
 def index():
@@ -17,6 +24,7 @@ def browse_directory():
         items = os.listdir(path)
         directories = [d for d in items if os.path.isdir(os.path.join(path, d))]
         files = [f for f in items if os.path.isfile(os.path.join(path, f))]
+        session['current_directory'] = path  # Add this line
         return jsonify({
             "status": "success",
             "current_path": path,
@@ -51,6 +59,9 @@ def get_file_content(filename):
         return jsonify({"status": "error", "message": "No directory selected"})
     
     file_path = os.path.join(directory, filename)
+    if not os.path.isfile(file_path):
+        file_path = filename  # If not found, assume it's a full path
+    
     try:
         with open(file_path, 'r') as file:
             content = file.read()
@@ -113,6 +124,35 @@ def run_cpp():
         return jsonify({"status": "error", "output": f"An error occurred: {str(e)}"})
     finally:
         os.remove(executable)
+
+
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    code = data['code']
+    user_message = data['message']
+    #print(code)
+    
+    try:
+        response = client.chat.completions.create(
+            model="nousresearch/hermes-3-llama-3.1-405b",
+            messages=[
+                {"role": "system", "content": "You are a helpful coding assistant. The user will provide you with code and questions about it. Always give your response in markdown format. It should be always markdown, remember that."},
+                {"role": "user", "content": f"Here's the code:\n\n{code}\n\nUser's question: {user_message}"}
+            ]
+        )
+        
+        ai_response = response.choices[0].message.content
+        html_response = markdown.markdown(ai_response)
+        
+        print("AI Response:", html_response)  # Add this line for debugging
+        
+        return jsonify({"status": "success", "response": ai_response})
+    except Exception as e:
+        print("Error:", str(e))  # Add this line for debugging
+        return jsonify({"status": "error", "message": str(e)})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

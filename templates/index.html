@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vim-like C++ Editor</title>
+    <title>CodeNode</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/atom-one-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs/loader.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
 </head>
 <body>
     <div id="app">
         <div id="sidebar">
             <div id="directory-browser">
-                <h2>Directory Browser</h2>
+                <h2>Browse File</h2>
                 <div id="current-path"></div>
                 <div id="directory-list"></div>
             </div>
@@ -24,6 +29,7 @@
             <div id="button-container">
                 <button onclick="saveCurrentFile()">Save</button>
                 <button onclick="runCode()">Run</button>
+                <button onclick="toggleChat()">Assistant</button>
                 <span id="save-notification"></span>
             </div>
         </div>
@@ -38,286 +44,17 @@
                 <pre id="output-area"></pre>
             </div>
         </div>
+        <div id="resizer-3" class="resizer"></div>
+        <div id="chat-container" style="display: none;">
+            <div id="chat-header">
+                <h2>Assistant</h2>
+            </div>
+            <div id="chat-messages"></div>
+            <div id="chat-input">
+                <div id="chat-input-area" contenteditable="true"></div>
+                <button id="chat-send-button" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
     </div>
-
-    <script>
-        let editor;
-        let openFiles = {};
-        let currentFile = '';
-        let currentPath = '/';
-
-        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs' } });
-
-        require(['vs/editor/editor.main'], function() {
-            editor = monaco.editor.create(document.getElementById('editor'), {
-                value: '// Select a file to edit',
-                language: 'cpp',
-                theme: 'vs-dark',
-                automaticLayout: true
-            });
-            browseDirectory('/');
-            initializeResizers();
-        });
-
-        function browseDirectory(path) {
-            fetch(`/browse?path=${encodeURIComponent(path)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        currentPath = data.current_path;
-                        updateDirectoryBrowser(data);
-                    } else {
-                        showNotification('Error browsing directory: ' + data.message, 'error');
-                    }
-                });
-        }
-
-        function updateDirectoryBrowser(data) {
-            const directoryList = document.getElementById('directory-list');
-            const currentPathElement = document.getElementById('current-path');
-            
-            currentPathElement.textContent = data.current_path;
-            directoryList.innerHTML = '';
-
-            if (data.current_path !== '/') {
-                const parentDir = document.createElement('div');
-                parentDir.textContent = '..';
-                parentDir.onclick = () => browseDirectory(data.current_path + '/..');
-                directoryList.appendChild(parentDir);
-            }
-
-            data.directories.forEach(dir => {
-                const dirElement = document.createElement('div');
-                dirElement.textContent = dir;
-                dirElement.onclick = () => browseDirectory(data.current_path + '/' + dir);
-                directoryList.appendChild(dirElement);
-            });
-
-            data.files.forEach(file => {
-                const fileElement = document.createElement('div');
-                fileElement.textContent = file;
-                fileElement.onclick = () => loadFile(file);
-                directoryList.appendChild(fileElement);
-            });
-        }
-
-        function selectDirectory(directory) {
-            fetch('/select_directory', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ directory: directory }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showNotification('Directory selected: ' + data.directory, 'success');
-                    loadFileList();
-                } else {
-                    showNotification('Error selecting directory: ' + data.message, 'error');
-                }
-            });
-        }
-
-        function loadFileList() {
-            fetch('/files')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        const fileList = document.getElementById('file-list');
-                        fileList.innerHTML = '<h2>Files</h2>';
-                        data.files.forEach(file => {
-                            const fileElement = document.createElement('div');
-                            fileElement.textContent = file;
-                            fileElement.onclick = () => loadFile(file);
-                            fileList.appendChild(fileElement);
-                        });
-                    } else {
-                        showNotification('Error loading files: ' + data.message, 'error');
-                    }
-                });
-        }
-
-        function loadFile(filename) {
-            if (openFiles[filename]) {
-                switchToTab(filename);
-                return;
-            }
-
-            fetch(`/file/${filename}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        openFiles[filename] = data.content;
-                        openFileTab(filename, data.content);
-                    } else {
-                        showNotification('Error loading file: ' + data.message, 'error');
-                    }
-                });
-        }
-
-        function openFileTab(filename, content) {
-            if (!document.querySelector(`.tab[data-filename="${filename}"]`)) {
-                createTab(filename);
-            }
-            switchToTab(filename);
-        }
-
-        function createTab(filename) {
-            const tabsContainer = document.getElementById('tabs-container');
-            const tab = document.createElement('div');
-            tab.className = 'tab';
-            tab.setAttribute('data-filename', filename);
-            tab.textContent = filename;
-            tab.onclick = () => switchToTab(filename);
-            
-            const closeButton = document.createElement('span');
-            closeButton.className = 'close-tab';
-            closeButton.textContent = '×';
-            closeButton.onclick = (e) => {
-                e.stopPropagation();
-                closeTab(filename);
-            };
-            
-            tab.appendChild(closeButton);
-            tabsContainer.appendChild(tab);
-        }
-
-        function switchToTab(filename) {
-            if (currentFile === filename) return;
-
-            currentFile = filename;
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.getAttribute('data-filename') === filename) {
-                    tab.classList.add('active');
-                }
-            });
-            editor.setValue(openFiles[filename]);
-            editor.updateOptions({ language: filename.endsWith('.cpp') ? 'cpp' : 'plaintext' });
-        }
-
-        function closeTab(filename) {
-            delete openFiles[filename];
-            const tab = document.querySelector(`.tab[data-filename="${filename}"]`);
-            if (tab) tab.remove();
-
-            if (currentFile === filename) {
-                const remainingTabs = Object.keys(openFiles);
-                if (remainingTabs.length > 0) {
-                    switchToTab(remainingTabs[remainingTabs.length - 1]);
-                } else {
-                    editor.setValue('// Select a file to edit');
-                    currentFile = '';
-                }
-            }
-        }
-
-        function saveCurrentFile() {
-            if (!currentFile) {
-                showNotification('No file selected', 'error');
-                return;
-            }
-            const content = editor.getValue();
-            fetch('/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: currentFile, content: content }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showNotification('File saved successfully', 'success');
-                } else {
-                    showNotification('Error saving file: ' + data.message, 'error');
-                }
-            });
-        }
-
-        function runCode() {
-            if (!currentFile || !currentFile.endsWith('.cpp')) {
-                showNotification('Please select a C++ file to run', 'error');
-                return;
-            }
-            
-            // Save the file before running
-            saveCurrentFile();
-            
-            const outputElement = document.getElementById('output-area');
-            outputElement.textContent = 'Running...';
-            
-            const input = document.getElementById('input-area').value;
-            
-            fetch('/run', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: currentFile, input: input }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                let outputContent = data.output || 'No output';
-                if (data.status === 'error') {
-                    outputContent = 'Error: ' + outputContent;
-                }
-                outputElement.textContent = outputContent;
-            })
-            .catch(error => {
-                outputElement.textContent = 'Error: ' + error.message;
-            });
-        }
-
-        function showNotification(message, type) {
-            const notification = document.getElementById('save-notification');
-            notification.textContent = message;
-            notification.className = type;
-            notification.style.display = 'inline';
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-
-        function initializeResizers() {
-            const sidebar = document.getElementById('sidebar');
-            const editorContainer = document.getElementById('editor-container');
-            const ioContainer = document.getElementById('io-container');
-            const resizer1 = document.getElementById('resizer-1');
-            const resizer2 = document.getElementById('resizer-2');
-
-            let isResizing = false;
-            let currentResizer;
-
-            function startResize(e, resizer) {
-                isResizing = true;
-                currentResizer = resizer;
-                document.addEventListener('mousemove', resize);
-                document.addEventListener('mouseup', stopResize);
-            }
-
-            function resize(e) {
-                if (!isResizing) return;
-
-                if (currentResizer === resizer1) {
-                    const newSidebarWidth = e.clientX;
-                    sidebar.style.width = `${newSidebarWidth}px`;
-                } else if (currentResizer === resizer2) {
-                    const newIoContainerWidth = window.innerWidth - e.clientX;
-                    ioContainer.style.width = `${newIoContainerWidth}px`;
-                }
-
-                // Ensure the Monaco editor resizes properly
-                if (editor) {
-                    editor.layout();
-                }
-            }
-
-            function stopResize() {
-                isResizing = false;
-                document.removeEventListener('mousemove', resize);
-                document.removeEventListener('mouseup', stopResize);
-            }
-
-            resizer1.addEventListener('mousedown', (e) => startResize(e, resizer1));
-            resizer2.addEventListener('mousedown', (e) => startResize(e, resizer2));
-        }
-    </script>
 </body>
 </html>
