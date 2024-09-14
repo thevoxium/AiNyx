@@ -231,6 +231,8 @@ def handle_command(command):
 
 
 
+import html
+
 @app.route('/git_diff', methods=['POST'])
 def git_diff():
     try:
@@ -253,30 +255,33 @@ def git_diff():
         line_number_new = 0
         
         for line in diff_lines:
+            # Escape HTML characters to prevent rendering
+            escaped_line = html.escape(line)
+            
             if line.startswith('diff --git'):
                 if current_file:
                     processed_diff.append('</table></div>')
                 current_file = line.split()[-1].split('/')[-1]
-                processed_diff.append(f'<div class="diff-file"><h3>{current_file}</h3><table>')
+                processed_diff.append(f'<div class="diff-file"><h3>{html.escape(current_file)}</h3><table>')
                 line_number_old = 0
                 line_number_new = 0
             elif line.startswith('+++') or line.startswith('---'):
-                continue
+                processed_diff.append(f'<tr><td colspan="3" class="diff-header">{escaped_line}</td></tr>')
             elif line.startswith('@@'):
                 match = re.match(r'@@ -(\d+),\d+ \+(\d+),\d+ @@', line)
                 if match:
                     line_number_old = int(match.group(1))
                     line_number_new = int(match.group(2))
-                processed_diff.append(f'<tr><td colspan="3" class="diff-header">{line}</td></tr>')
+                processed_diff.append(f'<tr><td colspan="3" class="diff-header">{escaped_line}</td></tr>')
             else:
                 if line.startswith('+'):
-                    processed_diff.append(f'<tr class="diff-added"><td></td><td>{line_number_new}</td><td>{line}</td></tr>')
+                    processed_diff.append(f'<tr class="diff-added"><td></td><td>{line_number_new}</td><td>{escaped_line}</td></tr>')
                     line_number_new += 1
                 elif line.startswith('-'):
-                    processed_diff.append(f'<tr class="diff-removed"><td>{line_number_old}</td><td></td><td>{line}</td></tr>')
+                    processed_diff.append(f'<tr class="diff-removed"><td>{line_number_old}</td><td></td><td>{escaped_line}</td></tr>')
                     line_number_old += 1
                 else:
-                    processed_diff.append(f'<tr><td>{line_number_old}</td><td>{line_number_new}</td><td>{line}</td></tr>')
+                    processed_diff.append(f'<tr><td>{line_number_old}</td><td>{line_number_new}</td><td>{escaped_line}</td></tr>')
                     line_number_old += 1
                     line_number_new += 1
         
@@ -292,6 +297,7 @@ def git_diff():
         return jsonify({"status": "error", "message": str(e)})
 
 
+        
 @app.route('/get_commits', methods=['GET'])
 def get_commits():
     try:

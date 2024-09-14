@@ -663,16 +663,30 @@ body {
 }
 
 .btn-close {
-    background-color: #c72c41;
-    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    background-color: #4a4a4a;
+    color: #ffffff;
     border: none;
-    padding: 5px 10px;
-    cursor: pointer;
     border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .btn-close:hover {
-    background-color: #a52231;
+    background-color: #c72c41;
+}
+
+.btn-close svg {
+    margin-right: 8px;
+}
+
+.btn-close span {
+    line-height: 1;
 }
 
 .diff-file {
@@ -744,4 +758,9 @@ body {
 #commit-select:focus {
     outline: none;
     border-color: #007acc;
+}
+
+.diff-file td:last-child {
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
