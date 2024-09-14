@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session
 from flask_socketio import SocketIO, emit
+from datetime import timedelta
 import os
 import subprocess
 import tempfile
@@ -19,6 +20,11 @@ from browse import DirectorySelector
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a real secret key
+
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+
+
 socketio = SocketIO(app)
 # Configure OpenAI API
 client = OpenAI(                                                                                               
@@ -181,8 +187,6 @@ def run_cpp():
         os.remove(executable)
 
 
-
-
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.json
@@ -190,6 +194,10 @@ def chat():
     user_message = data['message']
     tagged_files = data.get('taggedFiles', [])
     
+    # Initialize conversation history if it doesn't exist
+    if 'conversation_history' not in session:
+        session['conversation_history'] = []
+
     # Fetch content of tagged files
     tagged_file_contents = {}
     current_directory = get_current_directory()
@@ -207,22 +215,39 @@ def chat():
     for file_path, content in tagged_file_contents.items():
         prompt += f"Contents of {file_path}:\n{content}\n\n"
     
+    # Add the new prompt to the conversation history
+    session['conversation_history'].append({"role": "user", "content": prompt})
+    
+    # Prepare the messages for the API call
+    messages = [
+        {"role": "system", "content": "You are a helpful coding assistant. The user will provide you with code and questions about it. Always give your response in markdown format. It should be always markdown, remember that."},
+    ] + session['conversation_history']
+    
     try:
         response = client.chat.completions.create(
             model="nousresearch/hermes-3-llama-3.1-405b",
-            messages=[
-                {"role": "system", "content": "You are a helpful coding assistant. The user will provide you with code and questions about it. Always give your response in markdown format. It should be always markdown, remember that."},
-                {"role": "user", "content": prompt}
-            ]
+            messages=messages
         )
         
         ai_response = response.choices[0].message.content
-        html_response = markdown.markdown(ai_response)
+        
+        # Add the AI's response to the conversation history
+        session['conversation_history'].append({"role": "assistant", "content": ai_response})
+        
+        # Limit the conversation history to the last 10 messages (5 exchanges)
+        if len(session['conversation_history']) > 10:
+            session['conversation_history'] = session['conversation_history'][-10:]
+        
+        # Make sure to save the session after modifying it
+        session.modified = True
         
         return jsonify({"status": "success", "response": ai_response})
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"status": "error", "message": str(e)})
+
+
+
 
 def get_current_directory():
     return session.get('current_directory', os.getcwd())
