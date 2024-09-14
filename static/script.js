@@ -75,6 +75,10 @@ function selectDirectory(directory) {
     });
 }
 
+
+
+
+
 function loadFileList() {
     fetch('/files')
         .then(response => response.json())
@@ -328,18 +332,22 @@ function sendMessage() {
         addMessageToChat('user', message);
         chatInputArea.innerText = '';
 
-        const code = editor.getValue();
+        const currentCode = editor.getValue();
+        const taggedFiles = parseTaggedFiles(message);
 
         fetch('/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ code: code, message: message }),
+            body: JSON.stringify({ 
+                code: currentCode, 
+                message: message,
+                taggedFiles: taggedFiles
+            }),
         })
         .then(response => response.json())
         .then(data => {
-            console.log("Received data:", data);  // Add this line for debugging
             if (data.status === 'success') {
                 addMessageToChat('ai', data.response);
             } else {
@@ -353,20 +361,32 @@ function sendMessage() {
     }
 }
 
+function parseTaggedFiles(message) {
+    const regex = /@([\w./]+(?:\.\w+)?)/g;
+    const matches = message.match(regex);
+    return matches ? matches.map(match => match.slice(1)) : [];
+}
+
+function highlightTaggedFiles(message) {
+    const regex = /@([\w./]+(?:\.\w+)?)/g;
+    return message.replace(regex, '<span class="tagged-file">$&</span>');
+}
 function addMessageToChat(sender, content) {
     const chatMessages = document.getElementById('chat-messages');
     const messageElement = document.createElement('div');
     messageElement.classList.add('chat-message', sender + '-message');
     
-    if (sender === 'ai') {
+    if (sender === 'user') {
+        // Highlight tagged files in user messages
+        content = highlightTaggedFiles(content);
+        messageElement.innerHTML = content;
+    } else if (sender === 'ai') {
         messageElement.innerHTML = marked.parse(content);
         
         // Apply syntax highlighting to code blocks
         messageElement.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);
         });
-    } else {
-        messageElement.textContent = content;
     }
     
     chatMessages.appendChild(messageElement);

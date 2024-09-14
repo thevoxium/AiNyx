@@ -764,3 +764,26 @@ body {
     white-space: pre-wrap;
     word-wrap: break-word;
 }
+
+
+.tagged-file {
+    color: #4CAF50;  /* Green color */
+    font-weight: bold;
+    background-color: rgba(76, 175, 80, 0.1);  /* Light green background */
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background-color 0.3s ease;
+}
+
+.tagged-file:hover {
+    background-color: rgba(76, 175, 80, 0.2);  /* Slightly darker on hover */
+}
+
+
+.btn-directory {
+    background: linear-gradient(to right, #3498db, #2980b9);
+}
+
+.btn-directory:hover {
+    background: linear-gradient(to right, #2980b9, #2c3e50);
+}

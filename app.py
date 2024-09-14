@@ -31,17 +31,14 @@ def index():
     return render_template('index.html')
 
 
+
 @app.route('/browse_directory', methods=['GET'])
 def browse_directory():
     root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    #dialog = DirectorySelector(root) # Open the directory selection dialog
+    root.withdraw()
     directory = filedialog.askdirectory()
-    #root.wait_window(dialog.top)
-    #directory = dialog.result
-    root.destroy()  # Close the Tkinter instance
+    root.destroy()
 
-    
     if directory:
         try:
             items = os.listdir(directory)
@@ -96,6 +93,34 @@ def get_files():
     
     files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
     return jsonify({"status": "success", "files": files})
+
+
+@app.route('/get_directory_structure', methods=['GET'])
+def get_directory_structure():
+    def get_structure(path):
+        structure = []
+        for item in os.listdir(path):
+            item_path = os.path.join(path, item)
+            if os.path.isdir(item_path):
+                structure.append({
+                    'name': item,
+                    'type': 'folder',
+                    'children': get_structure(item_path)
+                })
+            else:
+                structure.append({
+                    'name': item,
+                    'type': 'file'
+                })
+        return structure
+
+    current_directory = get_current_directory()
+    structure = get_structure(current_directory)
+    return jsonify({
+        "status": "success",
+        "structure": structure,
+        "current_directory": current_directory
+    })
 
 
 
@@ -157,31 +182,50 @@ def run_cpp():
 
 
 
+
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.json
     code = data['code']
     user_message = data['message']
-    #print(code)
+    tagged_files = data.get('taggedFiles', [])
+    
+    # Fetch content of tagged files
+    tagged_file_contents = {}
+    current_directory = get_current_directory()
+    for file_path in tagged_files:
+        full_path = os.path.join(current_directory, file_path)
+        if os.path.isfile(full_path):
+            with open(full_path, 'r') as file:
+                tagged_file_contents[file_path] = file.read()
+        else:
+            tagged_file_contents[file_path] = f"File not found: {file_path}"
+    
+    # Prepare the prompt with tagged file contents
+    prompt = f"User's question: {user_message}\n\n"
+    prompt += f"Current file contents:\n{code}\n\n"
+    for file_path, content in tagged_file_contents.items():
+        prompt += f"Contents of {file_path}:\n{content}\n\n"
     
     try:
         response = client.chat.completions.create(
             model="nousresearch/hermes-3-llama-3.1-405b",
             messages=[
                 {"role": "system", "content": "You are a helpful coding assistant. The user will provide you with code and questions about it. Always give your response in markdown format. It should be always markdown, remember that."},
-                {"role": "user", "content": f"Here's the code:\n\n{code}\n\nUser's question: {user_message}"}
+                {"role": "user", "content": prompt}
             ]
         )
         
         ai_response = response.choices[0].message.content
         html_response = markdown.markdown(ai_response)
         
-        print("AI Response:", html_response)  # Add this line for debugging
-        
         return jsonify({"status": "success", "response": ai_response})
     except Exception as e:
-        print("Error:", str(e))  # Add this line for debugging
+        print("Error:", str(e))
         return jsonify({"status": "error", "message": str(e)})
+
+def get_current_directory():
+    return session.get('current_directory', os.getcwd())
 
 
 
@@ -297,7 +341,7 @@ def git_diff():
         return jsonify({"status": "error", "message": str(e)})
 
 
-        
+
 @app.route('/get_commits', methods=['GET'])
 def get_commits():
     try:
