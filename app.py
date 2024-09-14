@@ -50,10 +50,10 @@ def browse_directory():
             items = os.listdir(directory)
             directories = [d for d in items if os.path.isdir(os.path.join(directory, d))]
             files = [f for f in items if os.path.isfile(os.path.join(directory, f))]
-            session['current_directory'] = directory
+            session['current_directory'] = os.path.abspath(directory)  # Use absolute path
             return jsonify({
                 "status": "success",
-                "current_path": directory,
+                "current_path": session['current_directory'],
                 "directories": directories,
                 "files": files
             })
@@ -62,18 +62,12 @@ def browse_directory():
     else:
         return jsonify({"status": "cancelled"})
 
-@app.route('/file/<path:filename>')
-def get_file_content(filename):
-    directory = session.get('current_directory', '')
-    if not directory:
-        return jsonify({"status": "error", "message": "No directory selected"})
-    
-    file_path = os.path.join(directory, filename)
-    if not os.path.isfile(file_path):
-        return jsonify({"status": "error", "message": f"File not found: {file_path}"})
-    
+
+@app.route('/file/<path:filepath>')
+def get_file_content(filepath):
     try:
-        with open(file_path, 'r') as file:
+        full_path = os.path.join('/', filepath)  # Ensure the path starts with '/'
+        with open(full_path, 'r') as file:
             content = file.read()
         return jsonify({"status": "success", "content": content})
     except Exception as e:
@@ -101,33 +95,37 @@ def get_files():
     return jsonify({"status": "success", "files": files})
 
 
-@app.route('/get_directory_structure', methods=['GET'])
-def get_directory_structure():
-    def get_structure(path):
-        structure = []
-        for item in os.listdir(path):
-            item_path = os.path.join(path, item)
-            if os.path.isdir(item_path):
-                structure.append({
-                    'name': item,
-                    'type': 'folder',
-                    'children': get_structure(item_path)
-                })
-            else:
-                structure.append({
-                    'name': item,
-                    'type': 'file'
-                })
-        return structure
 
-    current_directory = get_current_directory()
-    structure = get_structure(current_directory)
+def get_directory_structure(path):
+    structure = []
+    for item in os.listdir(path):
+        item_path = os.path.join(path, item)
+        if os.path.isdir(item_path):
+            structure.append({
+                'name': item,
+                'type': 'folder',
+                'children': get_directory_structure(item_path)
+            })
+        else:
+            structure.append({
+                'name': item,
+                'type': 'file'
+            })
+    return structure
+
+
+@app.route('/get_directory_structure', methods=['GET'])
+def get_directory_structure_route():
+    directory = session.get('current_directory', '')
+    if not directory:
+        return jsonify({"status": "error", "message": "No directory selected"})
+    
+    structure = get_directory_structure(directory)
     return jsonify({
         "status": "success",
         "structure": structure,
-        "current_directory": current_directory
+        "current_directory": directory
     })
-
 
 
 @app.route('/save', methods=['POST'])

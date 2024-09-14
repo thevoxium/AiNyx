@@ -16,18 +16,6 @@ require(['vs/editor/editor.main'], function() {
     initializeResizers();
 });
 
-function browseDirectory(path) {
-    fetch(`/browse?path=${encodeURIComponent(path)}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                currentPath = data.current_path;
-                updateDirectoryBrowser(data);
-            } else {
-                showNotification('Error browsing directory: ' + data.message, 'error');
-            }
-        });
-}
 
 function updateDirectoryBrowser(data) {
     const directoryList = document.getElementById('directory-list');
@@ -98,23 +86,7 @@ function loadFileList() {
         });
 }
 
-function loadFile(filename) {
-    if (openFiles[filename]) {
-        switchToTab(filename);
-        return;
-    }
 
-    fetch(`/file/${filename}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                openFiles[filename] = data.content;
-                openFileTab(filename, data.content);
-            } else {
-                showNotification('Error loading file: ' + data.message, 'error');
-            }
-        });
-}
 
 function openFileTab(filename, content) {
     if (!document.querySelector(`.tab[data-filename="${filename}"]`)) {
@@ -660,6 +632,122 @@ function closeGitDiff() {
     document.body.style.overflow = 'auto';
 }
 
+
+
+
+
+
+function browseDirectory() {
+    fetch('/browse_directory')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                fetchDirectoryStructure();
+            } else {
+                showNotification('Error browsing directory: ' + data.message, 'error');
+            }
+        });
+}
+
+function fetchDirectoryStructure() {
+    fetch('/get_directory_structure')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateFileTree(data.structure, data.current_directory);
+            } else {
+                showNotification('Error fetching directory structure: ' + data.message, 'error');
+            }
+        });
+}
+
+
+
+function getFileIcon(fileName) {
+    const extension = fileName.split('.').pop().toLowerCase();
+    switch (extension) {
+        case 'js':
+        case 'py':
+        case 'cpp':
+        case 'java':
+        case 'c':
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>';
+        case 'html':
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>';
+        case 'txt':
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
+        default:
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>';
+    }
+}
+
+
+
+
+let currentDirectory = '';
+
+function updateFileTree(structure, currentPath) {
+    currentDirectory = currentPath;
+    const fileTree = document.getElementById('file-tree');
+    //fileTree.innerHTML = `<div class="file-tree-item">${currentPath}</div>`;
+    fileTree.appendChild(createFileTreeItem(structure, currentPath));
+}
+
+function createFileTreeItem(item, parentPath) {
+    const itemElement = document.createElement('div');
+    itemElement.className = 'file-tree-item';
+    
+    if (Array.isArray(item)) {
+        item.forEach(subItem => {
+            itemElement.appendChild(createFileTreeItem(subItem, parentPath));
+        });
+    } else {
+        const fullPath = parentPath + '/' + item.name;
+        const icon = item.type === 'folder' 
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>'
+            : getFileIcon(item.name);
+        
+        itemElement.innerHTML = `
+            <span class="file-tree-icon">${icon}</span>
+            <span class="file-tree-name">${item.name}</span>
+        `;
+        
+        if (item.type === 'folder') {
+            itemElement.classList.add('file-tree-folder');
+            const childrenContainer = document.createElement('div');
+            childrenContainer.className = 'file-tree-children';
+            childrenContainer.style.display = 'none';
+            item.children.forEach(child => {
+                childrenContainer.appendChild(createFileTreeItem(child, fullPath));
+            });
+            itemElement.appendChild(childrenContainer);
+            
+            itemElement.querySelector('.file-tree-name').addEventListener('click', () => {
+                childrenContainer.style.display = childrenContainer.style.display === 'none' ? 'block' : 'none';
+                itemElement.classList.toggle('expanded');
+            });
+        } else {
+            itemElement.addEventListener('click', () => loadFile(fullPath));
+        }
+    }
+    
+    return itemElement;
+}
+
+function loadFile(fullPath) {
+    // Remove the leading '/' if it exists to match the route in Flask
+    const path = fullPath.startsWith('/') ? fullPath.slice(1) : fullPath;
+    fetch(`/file/${path}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                openFiles[fullPath] = data.content;
+                openFileTab(fullPath, data.content);
+            } else {
+                showNotification('Error loading file: ' + data.message, 'error');
+            }
+        });
+}
 
 
 
