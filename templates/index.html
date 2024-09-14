@@ -25,6 +25,7 @@
 <body>
     <div id="app">
         <div id="sidebar">
+
             <div id="directory-browser">
                 <div class="button-container">
                     <button class="btn btn-browse" onclick="browseDirectory()">
@@ -60,6 +61,12 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
                         <span>Terminal</span>
                     </button>
+
+                    <button onclick="getGitDiff()" class="btn btn-git-diff">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M16 3v5h5"/><path d="M16 3l5 5"/><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/></svg>
+                        <span>Git Diff</span>
+                    </button>
+
                     <span id="save-notification"></span>
                 </div>
                 <div id="hardware-stats-container">
@@ -102,6 +109,19 @@
         <div id="terminal-container" style="display: none;">
             <div id="terminal"></div>
         </div>
+    </div>
+
+
+    
+    <div id="git-diff-container" style="display: none;">
+        <div id="git-diff-header">
+            <h2>Git Diff</h2>
+            <select id="commit-select">
+                <option value="HEAD">Current changes</option>
+            </select>
+            <button onclick="closeGitDiff()" class="btn btn-close">Close</button>
+        </div>
+        <div id="git-diff-content"></div>
     </div>
 </body>
 </html>

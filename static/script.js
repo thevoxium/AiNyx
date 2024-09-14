@@ -566,6 +566,82 @@ function loadFile(filename) {
 
 
 
+function getGitDiff() {
+    fetch('/get_commits')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                populateCommitDropdown(data.commits);
+                showGitDiffPanel();
+                fetchDiff('HEAD');
+            } else {
+                showNotification('Error getting commits: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error: ' + error.message, 'error');
+        });
+}
+
+function populateCommitDropdown(commits) {
+    const select = document.getElementById('commit-select');
+    select.innerHTML = '<option value="HEAD">Current changes</option>';
+    commits.forEach(commit => {
+        const option = document.createElement('option');
+        option.value = commit.hash;
+        option.textContent = `${commit.hash.substring(0, 7)} - ${commit.message}`;
+        select.appendChild(option);
+    });
+    select.onchange = function() {
+        fetchDiff(this.value);
+    };
+}
+
+function fetchDiff(commitHash) {
+    fetch('/git_diff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commit_hash: commitHash }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById('git-diff-content').innerHTML = data.diff;
+        } else {
+            showNotification('Error getting git diff: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+
+function showGitDiffPanel() {
+    document.getElementById('app').style.display = 'none';
+
+    // Show git diff container
+    document.getElementById('git-diff-container').style.display = 'flex';
+
+    // Prevent scrolling on the body
+    document.body.style.overflow = 'hidden';
+}
+
+
+
+function closeGitDiff() {
+    // Hide git diff container
+    document.getElementById('git-diff-container').style.display = 'none';
+
+    // Show the app container
+    document.getElementById('app').style.display = 'flex';
+
+    // Restore scrolling on the body
+    document.body.style.overflow = 'auto';
+}
+
+
+
 
 document.getElementById('chat-input-area').addEventListener('keypress', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -573,3 +649,5 @@ document.getElementById('chat-input-area').addEventListener('keypress', function
         sendMessage();
     }
 });
+
+

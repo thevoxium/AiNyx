@@ -14,6 +14,7 @@ import fcntl
 import logging
 import tkinter as tk
 from tkinter import filedialog
+import re
 from browse import DirectorySelector
 
 app = Flask(__name__)
@@ -226,6 +227,93 @@ def handle_command(command):
         output = f"Error executing command: {str(e)}\n"
     
     emit('output', output)
+
+
+
+
+@app.route('/git_diff', methods=['POST'])
+def git_diff():
+    try:
+        directory = session.get('current_directory', '')
+        if not directory:
+            return jsonify({"status": "error", "message": "No directory selected"})
+        
+        commit_hash = request.json.get('commit_hash', 'HEAD')
+        
+        result = subprocess.run(['git', 'diff', commit_hash],
+                                cwd=directory,
+                                capture_output=True,
+                                text=True,
+                                check=True)
+        
+        diff_lines = result.stdout.split('\n')
+        processed_diff = []
+        current_file = ""
+        line_number_old = 0
+        line_number_new = 0
+        
+        for line in diff_lines:
+            if line.startswith('diff --git'):
+                if current_file:
+                    processed_diff.append('</table></div>')
+                current_file = line.split()[-1].split('/')[-1]
+                processed_diff.append(f'<div class="diff-file"><h3>{current_file}</h3><table>')
+                line_number_old = 0
+                line_number_new = 0
+            elif line.startswith('+++') or line.startswith('---'):
+                continue
+            elif line.startswith('@@'):
+                match = re.match(r'@@ -(\d+),\d+ \+(\d+),\d+ @@', line)
+                if match:
+                    line_number_old = int(match.group(1))
+                    line_number_new = int(match.group(2))
+                processed_diff.append(f'<tr><td colspan="3" class="diff-header">{line}</td></tr>')
+            else:
+                if line.startswith('+'):
+                    processed_diff.append(f'<tr class="diff-added"><td></td><td>{line_number_new}</td><td>{line}</td></tr>')
+                    line_number_new += 1
+                elif line.startswith('-'):
+                    processed_diff.append(f'<tr class="diff-removed"><td>{line_number_old}</td><td></td><td>{line}</td></tr>')
+                    line_number_old += 1
+                else:
+                    processed_diff.append(f'<tr><td>{line_number_old}</td><td>{line_number_new}</td><td>{line}</td></tr>')
+                    line_number_old += 1
+                    line_number_new += 1
+        
+        if current_file:
+            processed_diff.append('</table></div>')
+        
+        html_diff = '\n'.join(processed_diff)
+        
+        return jsonify({"status": "success", "diff": html_diff})
+    except subprocess.CalledProcessError as e:
+        return jsonify({"status": "error", "message": f"Git diff failed: {e.stderr}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route('/get_commits', methods=['GET'])
+def get_commits():
+    try:
+        directory = session.get('current_directory', '')
+        if not directory:
+            return jsonify({"status": "error", "message": "No directory selected"})
+        
+        result = subprocess.run(['git', 'log', '--pretty=format:%H|%s', '-n', '50'],
+                                cwd=directory,
+                                capture_output=True,
+                                text=True,
+                                check=True)
+        
+        commits = [{'hash': line.split('|')[0], 'message': line.split('|')[1]} 
+                   for line in result.stdout.split('\n') if line]
+        
+        return jsonify({"status": "success", "commits": commits})
+    except subprocess.CalledProcessError as e:
+        return jsonify({"status": "error", "message": f"Failed to get commits: {e.stderr}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

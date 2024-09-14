@@ -605,3 +605,143 @@ body {
 #directory-list, #file-list {
     margin-top: 10px;
 }
+
+
+.btn-git-diff {
+    background: linear-gradient(to right, #6e5494, #4078c0);
+}
+
+.btn-git-diff:hover {
+    background: linear-gradient(to right, #5a4578, #3672b7);
+}
+
+
+#git-diff-container {
+    display: none;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #1e1e1e;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+#git-diff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #252526;
+    border-bottom: 1px solid #3c3c3c;
+    position: sticky;
+    top: 0;
+    z-index: 10000;
+}
+
+#git-diff-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#git-diff-header h2 {
+    margin: 0;
+    color: #d4d4d4;
+}
+
+#git-diff-content {
+    padding: 20px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.btn-close {
+    background-color: #c72c41;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.btn-close:hover {
+    background-color: #a52231;
+}
+
+.diff-file {
+    margin-bottom: 20px;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.diff-file h3 {
+    margin: 0;
+    padding: 10px;
+    background-color: #2d2d2d;
+    color: #d4d4d4;
+}
+
+.diff-file table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.diff-file td {
+    padding: 0 10px;
+    white-space: pre;
+}
+
+.diff-file td:nth-child(1),
+.diff-file td:nth-child(2) {
+    width: 1%;
+    text-align: right;
+    color: #6e6e6e;
+    user-select: none;
+}
+
+.diff-header {
+    background-color: #264f78;
+    color: #d4d4d4;
+}
+
+.diff-added {
+    background-color: #144212;
+}
+
+.diff-removed {
+    background-color: #660000;
+}
+
+.diff-added td:nth-child(2),
+.diff-added td:nth-child(3) {
+    color: #7eff70;
+}
+
+.diff-removed td:nth-child(1),
+.diff-removed td:nth-child(3) {
+    color: #ff7070;
+}
+
+
+
+#commit-select {
+    margin-left: 20px;
+    padding: 5px;
+    background-color: #3c3c3c;
+    color: #d4d4d4;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+#commit-select:focus {
+    outline: none;
+    border-color: #007acc;
+}
