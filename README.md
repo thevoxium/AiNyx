@@ -1,7 +1,4 @@
-<img src="./static/CodeNode.png" alt="logo" width="200" height="220">
-
-
-# CodeNode
+# <img src="./static/CodeNode.png" alt="logo" width="100" height="120"> CodeNode
 
 ## Overview
 
