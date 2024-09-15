@@ -17,10 +17,9 @@ require(['vs/editor/editor.main'], function() {
 });
 
 
-let isOpen = true;
+let isOpen = false;
 function toggleIO() {
     isOpen = !isOpen;
-    document.getElementById('io-container').style.display = isOpen ? 'none' : 'flex';
     document.getElementById('io-container').style.display = isOpen ? 'flex' : 'none';
     // Add your logic here to actually open/close the I/O container
 }
@@ -238,19 +237,38 @@ function toggleChat() {
     const chatContainer = document.getElementById('chat-container');
     const editorContainer = document.getElementById('editor-container');
     const ioContainer = document.getElementById('io-container');
+    const chatInputArea = document.getElementById('chat-input-area');
     
-    if (chatContainer.style.display === 'none') {
+    if (chatContainer.style.display === 'none' || chatContainer.style.display === '') {
         chatContainer.style.display = 'flex';
         editorContainer.style.width = 'calc(100% - 500px)';  // Adjust width for chat
         ioContainer.style.width = '250px';  // Reduce IO container width
+        
+        // Add event listener when chat is opened
+        if (chatInputArea) {
+            chatInputArea.addEventListener('keypress', handleChatInputKeypress);
+        }
     } else {
         chatContainer.style.display = 'none';
         editorContainer.style.width = 'calc(100% - 250px)';  // Restore original width
         ioContainer.style.width = '250px';  // Restore original IO container width
+        
+        // Remove event listener when chat is closed
+        if (chatInputArea) {
+            chatInputArea.removeEventListener('keypress', handleChatInputKeypress);
+        }
     }
     
     if (editor) {
         editor.layout();
+    }
+}
+
+function handleChatInputKeypress(e) {
+    console.log("hello");
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
     }
 }
 
@@ -902,14 +920,70 @@ function deleteFile(filePath) {
 
 
 
+let currentModel = "openai/gpt-4o-mini";
 
+document.addEventListener('DOMContentLoaded', function() {
+    const modelMenuTrigger = document.getElementById('model-menu-trigger');
+    const modelMenu = document.getElementById('model-menu');
+    const modelOptions = document.querySelectorAll('.model-option');
 
+    modelMenuTrigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        modelMenu.classList.toggle('hidden');
+    });
 
-document.getElementById('chat-input-area').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
+    document.addEventListener('click', function() {
+        modelMenu.classList.add('hidden');
+    });
+
+    modelOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            currentModel = this.dataset.model;
+            modelMenu.classList.add('hidden');
+            console.log('Selected model:', currentModel);
+        });
+    });
 });
+
+function sendMessage() {
+    const chatInputArea = document.getElementById('chat-input-area');
+    const message = chatInputArea.innerText.trim();
+    if (message) {
+        addMessageToChat('user', message);
+        chatInputArea.innerText = '';
+
+        const currentCode = editor.getValue();
+        const taggedFiles = parseTaggedFiles(message);
+
+        fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                code: currentCode, 
+                message: message,
+                taggedFiles: taggedFiles,
+                model: currentModel
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                addMessageToChat('ai', data.response);
+            } else {
+                addMessageToChat('ai', 'Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            addMessageToChat('ai', 'An error occurred while processing your request.');
+        });
+    }
+}
+
+
+
+
 
 

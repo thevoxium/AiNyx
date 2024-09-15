@@ -40,7 +40,7 @@ body {
     width: 300px;
     min-width: 200px;
     max-width: 40%;
-    display: flex;
+    display: none;
     flex-direction: column;
     background-color: #181C14;
     border-left: 1px solid #2d2d2d ;
@@ -305,19 +305,7 @@ body {
     color: #555;
 }
 
-#chat-send-button {
-    background-color: #0e639c;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
 
-#chat-send-button:hover {
-    background-color: #1177bb;
-}
 
 .chat-message {
     margin-bottom: 15px;
@@ -394,27 +382,32 @@ body {
 }
 
 
-.btn-send {
-    background: linear-gradient(to right, #3b82f6, #60a5fa);
-    color: white;
+.btn {
+    background-color: transparent;
     border: none;
-    padding: 8px 15px;
+    color: #cccccc;
     cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+    padding: 6px;
+    border-radius: 3px;
+    transition: background-color 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 500;
 }
-
+.btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.btn svg {
+    width: 20px;
+    height: 20px;
+}
+.btn-send {
+    color: #0078D4;
+}
 .btn-send:hover {
-    background: linear-gradient(to right, #2563eb, #3b82f6);
+    background-color: rgba(0, 120, 212, 0.2);
 }
 
-.btn-send .icon {
-    margin-right: 8px;
-}
 
 #chat-input {
     display: flex;
@@ -940,3 +933,64 @@ body {
     /* ... existing styles ... */
     animation: fadeIn 0.2s ease-out;
 }
+
+
+
+.model-selector {
+    position: relative;
+    display: inline-block;
+}
+
+.model-menu-trigger {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+.model-menu-trigger:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.model-menu-trigger svg {
+    width: 24px;
+    height: 24px;
+    stroke: white;
+}
+
+.model-menu {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background-color: #2d2d2d;;
+    color: white;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 4px;
+}
+
+.model-menu.hidden {
+    display: none;
+}
+
+.model-option {
+    color: whitesmoke;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.model-option:hover {
+    background: black;
+}
+
+
+
+
+        

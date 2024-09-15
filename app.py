@@ -260,6 +260,8 @@ def chat():
     code = data['code']
     user_message = data['message']
     tagged_files = data.get('taggedFiles', [])
+    model = data.get('model', 'openai/gpt-4o-mini')  # Default to GPT-4o-mini if not specified
+    print(model)
     
     # Initialize conversation history if it doesn't exist
     if 'conversation_history' not in session:
@@ -267,7 +269,8 @@ def chat():
 
     # Fetch content of tagged files
     tagged_file_contents = {}
-    current_directory = get_current_directory()
+    session_state = load_session_state()
+    current_directory = session_state.get("selected_directory", os.getcwd())
     for file_path in tagged_files:
         full_path = os.path.join(current_directory, file_path)
         if os.path.isfile(full_path):
@@ -290,7 +293,6 @@ def chat():
         {"role": "system", "content": "You are a helpful coding assistant. The user will provide you with code and questions about it. Always give your response in markdown format. It should be always markdown, remember that."},
     ] + session['conversation_history']
     
-    model = "openai/gpt-4o-mini"
     try:
         response = client.chat.completions.create(
             model=model,
@@ -313,7 +315,6 @@ def chat():
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"status": "error", "message": str(e)})
-
 
 
 
