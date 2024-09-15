@@ -1,4 +1,4 @@
-<img src="./static/CodeNode.png" alt="logo" width="400" height="400">
+<img src="./static/CodeNode.png" alt="logo" width="200" height="220">
 
 
 # CodeNode
