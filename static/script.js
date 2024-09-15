@@ -115,6 +115,9 @@ function createTab(filename) {
     tabsContainer.appendChild(tab);
 }
 
+
+
+
 function switchToTab(filename) {
     if (currentFile === filename) return;
 
@@ -167,8 +170,8 @@ function saveCurrentFile() {
 }
 
 function runCode() {
-    if (!currentFile || !currentFile.endsWith('.cpp')) {
-        showNotification('Please select a C++ file to run', 'error');
+    if (!currentFile || (!currentFile.endsWith('.cpp') && !currentFile.endsWith('.py'))) {
+        showNotification('Please select a C++ or Python file to run', 'error');
         return;
     }
     

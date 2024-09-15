@@ -146,7 +146,7 @@ def save_file():
         return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/run', methods=['POST'])
-def run_cpp():
+def run_code():
     data = request.json
     filename = data['filename']
     user_input = data.get('input', '')
@@ -156,33 +156,48 @@ def run_cpp():
     
     file_path = os.path.join(directory, filename)
     
-    if not filename.endswith('.cpp'):
-        return jsonify({"status": "error", "output": "Only C++ files are supported."})
-    
-    with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_exe:
-        executable = temp_exe.name
-    
-    compile_command = f"g++ {file_path} -o {executable}"
-    compile_process = subprocess.run(compile_command, shell=True, capture_output=True, text=True)
-    
-    if compile_process.returncode != 0:
-        return jsonify({"status": "error", "output": f"Compilation error:\n{compile_process.stderr}"})
-    
-    try:
-        run_process = subprocess.run(executable, input=user_input, shell=True, capture_output=True, text=True, timeout=5)
-        output = run_process.stdout
-        error = run_process.stderr
+    if filename.endswith('.cpp'):
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_exe:
+            executable = temp_exe.name
         
-        if run_process.returncode != 0:
-            return jsonify({"status": "error", "output": f"Runtime error:\n{error}"})
+        compile_command = f"g++ {file_path} -o {executable}"
+        compile_process = subprocess.run(compile_command, shell=True, capture_output=True, text=True)
         
-        return jsonify({"status": "success", "output": output or "Program ran successfully, but produced no output."})
-    except subprocess.TimeoutExpired:
-        return jsonify({"status": "error", "output": "Program execution timed out after 5 seconds."})
-    except Exception as e:
-        return jsonify({"status": "error", "output": f"An error occurred: {str(e)}"})
-    finally:
-        os.remove(executable)
+        if compile_process.returncode != 0:
+            return jsonify({"status": "error", "output": f"Compilation error:\n{compile_process.stderr}"})
+        
+        try:
+            run_process = subprocess.run(executable, input=user_input, shell=True, capture_output=True, text=True, timeout=5)
+            output = run_process.stdout
+            error = run_process.stderr
+            
+            if run_process.returncode != 0:
+                return jsonify({"status": "error", "output": f"Runtime error:\n{error}"})
+            
+            return jsonify({"status": "success", "output": output or "Program ran successfully, but produced no output."})
+        except subprocess.TimeoutExpired:
+            return jsonify({"status": "error", "output": "Program execution timed out after 5 seconds."})
+        except Exception as e:
+            return jsonify({"status": "error", "output": f"An error occurred: {str(e)}"})
+        finally:
+            os.remove(executable)
+
+    elif filename.endswith('.py'):
+    # Run Python code
+        try:
+            run_process = subprocess.run(['python', file_path], input=user_input, text=True, capture_output=True, timeout=5)
+            output = run_process.stdout
+            error = run_process.stderr
+
+            if run_process.returncode != 0:
+                return jsonify({"status": "error", "output": f"Runtime error:\n{error}"})
+
+            return jsonify({"status": "success", "output": output or "Program ran successfully, but produced no output."})
+        except subprocess.TimeoutExpired:
+            return jsonify({"status": "error", "output": "Program execution timed out after 5 seconds."})
+        except Exception as e:
+            return jsonify({"status": "error", "output": f"An error occurred: {str(e)}"})
+
 
 
 @app.route('/chat', methods=['POST'])
@@ -221,9 +236,10 @@ def chat():
         {"role": "system", "content": "You are a helpful coding assistant. The user will provide you with code and questions about it. Always give your response in markdown format. It should be always markdown, remember that."},
     ] + session['conversation_history']
     
+    model = "openai/gpt-4o-mini"
     try:
         response = client.chat.completions.create(
-            model="nousresearch/hermes-3-llama-3.1-405b",
+            model=model,
             messages=messages
         )
         
