@@ -17,15 +17,15 @@ body {
     width: 250px;
     min-width: 200px;
     max-width: 30%;
-    background-color: #252526;
+    background-color:  #181C14  ;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #3c3c3c;
+    border-right: 1px solid #2d2d2d ;
 }
 
 #chat-container {
     display: none;
-    border-left: 1px solid #3c3c3c;
+    border-left: 1px solid #2d2d2d ;
     border-right: none;
 }
 
@@ -42,14 +42,14 @@ body {
     max-width: 40%;
     display: flex;
     flex-direction: column;
-    background-color: #252526;
-    border-left: 1px solid #3c3c3c;
+    background-color: #181C14;
+    border-left: 1px solid #2d2d2d ;
 }
 
 /* Sidebar styles */
 #directory-browser, #chat-header {
     padding: 15px;
-    border-bottom: 1px solid #3c3c3c;
+    border-bottom: 1px solid #2d2d2d ;
 }
 
 #directory-browser h2, #chat-header h2, #file-list h2 {
@@ -83,36 +83,43 @@ body {
 }
 
 #directory-list div:hover, #file-list div:hover {
-    background-color: #3c3c3c;
+    background-color: #2d2d2d ;
 }
 
 /* Editor styles */
+
+#editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 #tabs-container {
     display: flex;
-    background-color: #2d2d2d;
-    border-bottom: 1px solid #3c3c3c;
     overflow-x: auto;
+    background-color: #1e1e1e;
+    padding-top: 10px;
+    padding-bottom: 15px;
 }
 
 .tab {
-    padding: 8px 15px;
+    padding: 5px 10px;
     background-color: #2d2d2d;
-    border-right: 1px solid #3c3c3c;
+    color: #ffffff;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    margin-right: 2px;
     cursor: pointer;
-    white-space: nowrap;
     display: flex;
     align-items: center;
-    transition: background-color 0.2s ease;
 }
 
 .tab.active {
     background-color: #1e1e1e;
-    border-bottom: 2px solid #0e639c;
 }
 
 .close-tab {
-    margin-left: 8px;
-    font-size: 14px;
+    margin-left: 5px;
     color: #999;
 }
 
@@ -123,6 +130,8 @@ body {
 #editor {
     flex-grow: 1;
 }
+
+
 
 /* Button styles */
 #button-container {
@@ -211,7 +220,7 @@ body {
     flex-grow: 1;
     background-color: #1e1e1e;
     color: #d4d4d4;
-    border: 1px solid #3c3c3c;
+    border: 1px solid #2d2d2d ;
     padding: 10px;
     font-family: 'Consolas', 'Courier New', monospace;
     border-radius: 4px;
@@ -230,7 +239,7 @@ body {
 /* Resizer */
 .resizer {
     width: 5px;
-    background: #3c3c3c;
+    background: #2d2d2d ;
     cursor: col-resize;
     transition: background 0.2s;
 }
@@ -268,7 +277,7 @@ body {
 #chat-input {
     display: flex;
     padding: 15px;
-    border-top: 1px solid #3c3c3c;
+    border-top: 1px solid #2d2d2d ;
 }
 
 #chat-input-area {
@@ -278,7 +287,7 @@ body {
     overflow-y: auto;
     background-color: #1e1e1e;
     color: #d4d4d4;
-    border: 1px solid #3c3c3c;
+    border: 1px solid #2d2d2d ;
     padding: 10px;
     margin-right: 10px;
     border-radius: 4px;
@@ -316,7 +325,7 @@ body {
 
 .ai-message {
     background-color: #1e1e1e;
-    border: 1px solid #3c3c3c;
+    border: 1px solid #2d2d2d ;
 }
 
 /* Markdown styles for chat messages */
@@ -334,7 +343,7 @@ body {
 
 .chat-message pre {
     background-color: #2d2d2d;
-    border: 1px solid #3c3c3c;
+    border: 1px solid #2d2d2d ;
     border-radius: 4px;
     padding: 10px;
     overflow-x: auto;
@@ -359,7 +368,7 @@ body {
 .chat-message blockquote {
     padding: 0 1em;
     color: #9ca3af;
-    border-left: 0.25em solid #3c3c3c;
+    border-left: 0.25em solid #2d2d2d ;
     margin: 0 0 16px 0;
 }
 
@@ -370,7 +379,7 @@ body {
 
 .chat-message table th, .chat-message table td {
     padding: 6px 13px;
-    border: 1px solid #3c3c3c;
+    border: 1px solid #2d2d2d ;
 }
 
 .chat-message table tr:nth-child(2n) {
@@ -403,7 +412,7 @@ body {
 #chat-input {
     display: flex;
     padding: 15px;
-    border-top: 1px solid #3c3c3c;
+    border-top: 1px solid #2d2d2d ;
     align-items: center;
 }
 
@@ -414,7 +423,7 @@ body {
     overflow-y: auto;
     background-color: #1e1e1e;
     color: #d4d4d4;
-    border: 1px solid #3c3c3c;
+    border: 1px solid #2d2d2d ;
     padding: 10px;
     margin-right: 10px;
     border-radius: 4px;
@@ -437,7 +446,7 @@ body {
     align-items: center;
     padding: 10px 15px;
     background-color: #252526;
-    border-top: 1px solid #3c3c3c;
+    border-top: 1px solid #2d2d2d ;
 }
 
 #button-container {
@@ -482,7 +491,7 @@ body {
     max-width: 600px;
     height: 100%;
     background-color: #1e1e1e;
-    border-left: 1px solid #3c3c3c;
+    border-left: 1px solid #2d2d2d ;
     display: none;
     flex-direction: column;
 }
@@ -631,7 +640,7 @@ body {
     align-items: center;
     padding: 10px 20px;
     background-color: #252526;
-    border-bottom: 1px solid #3c3c3c;
+    border-bottom: 1px solid #2d2d2d ;
     position: sticky;
     top: 0;
     z-index: 10000;
@@ -687,7 +696,7 @@ body {
 
 .diff-file {
     margin-bottom: 20px;
-    border: 1px solid #3c3c3c;
+    border: 1px solid #2d2d2d ;
     border-radius: 4px;
     overflow: hidden;
 }
@@ -745,7 +754,7 @@ body {
 #commit-select {
     margin-left: 20px;
     padding: 5px;
-    background-color: #3c3c3c;
+    background-color: #2d2d2d ;
     color: #d4d4d4;
     border: 1px solid #555;
     border-radius: 4px;
@@ -833,7 +842,7 @@ body {
     background-color: #252526;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #3c3c3c;
+    border-right: 1px solid #2d2d2d ;
     height: 100vh; /* Ensure the sidebar takes full height */
 }
 

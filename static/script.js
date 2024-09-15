@@ -88,65 +88,10 @@ function loadFileList() {
 
 
 
-function openFileTab(filename, content) {
-    if (!document.querySelector(`.tab[data-filename="${filename}"]`)) {
-        createTab(filename);
-    }
-    switchToTab(filename);
-}
-
-function createTab(filename) {
-    const tabsContainer = document.getElementById('tabs-container');
-    const tab = document.createElement('div');
-    tab.className = 'tab';
-    tab.setAttribute('data-filename', filename);
-    tab.textContent = filename;
-    tab.onclick = () => switchToTab(filename);
-    
-    const closeButton = document.createElement('span');
-    closeButton.className = 'close-tab';
-    closeButton.textContent = '×';
-    closeButton.onclick = (e) => {
-        e.stopPropagation();
-        closeTab(filename);
-    };
-    
-    tab.appendChild(closeButton);
-    tabsContainer.appendChild(tab);
-}
 
 
 
 
-function switchToTab(filename) {
-    if (currentFile === filename) return;
-
-    currentFile = filename;
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-        if (tab.getAttribute('data-filename') === filename) {
-            tab.classList.add('active');
-        }
-    });
-    editor.setValue(openFiles[filename]);
-    editor.updateOptions({ language: filename.endsWith('.cpp') ? 'cpp' : 'plaintext' });
-}
-
-function closeTab(filename) {
-    delete openFiles[filename];
-    const tab = document.querySelector(`.tab[data-filename="${filename}"]`);
-    if (tab) tab.remove();
-
-    if (currentFile === filename) {
-        const remainingTabs = Object.keys(openFiles);
-        if (remainingTabs.length > 0) {
-            switchToTab(remainingTabs[remainingTabs.length - 1]);
-        } else {
-            editor.setValue('// Select a file to edit');
-            currentFile = '';
-        }
-    }
-}
 
 function saveCurrentFile() {
     if (!currentFile) {
@@ -427,7 +372,6 @@ const PROMPT = '$ ';
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeTerminal();
-    createBrowseDirectoryButton();
 });
 
 
@@ -546,18 +490,6 @@ function updateDirectoryBrowser(data) {
     });
 }
 
-function loadFile(filename) {
-    fetch(`/file/${encodeURIComponent(filename)}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                openFiles[filename] = data.content;
-                openFileTab(filename, data.content);
-            } else {
-                showNotification('Error loading file: ' + data.message, 'error');
-            }
-        });
-}
 
 
 
@@ -751,6 +683,102 @@ function loadFile(fullPath) {
             }
         });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////
+function loadFile(fullPath) {
+    // Remove the leading '/' if it exists to match the route in Flask
+    const path = fullPath.startsWith('/') ? fullPath.slice(1) : fullPath;
+    fetch(`/file/${path}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                openFiles[fullPath] = data.content;
+                openFileTab(fullPath, data.content);
+            } else {
+                showNotification('Error loading file: ' + data.message, 'error');
+            }
+        });
+}
+
+function openFileTab(filename, content) {
+    if (!document.querySelector(`.tab[data-filename="${filename}"]`)) {
+        createTab(filename);
+    }
+    switchToTab(filename);
+}
+
+function createTab(filename) {
+    const tabsContainer = document.getElementById('tabs-container');
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.setAttribute('data-filename', filename);
+    tab.textContent = filename;
+    tab.onclick = () => switchToTab(filename);
+    
+    const closeButton = document.createElement('span');
+    closeButton.className = 'close-tab';
+    closeButton.textContent = '×';
+    closeButton.onclick = (e) => {
+        e.stopPropagation();
+        closeTab(filename);
+    };
+    
+    tab.appendChild(closeButton);
+    tabsContainer.appendChild(tab);
+}
+
+function switchToTab(filename) {
+    if (currentFile === filename) return;
+
+    currentFile = filename;
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.getAttribute('data-filename') === filename) {
+            tab.classList.add('active');
+        }
+    });
+    editor.setValue(openFiles[filename]);
+    
+    // Update the editor's language based on the file extension
+    const fileExtension = filename.split('.').pop().toLowerCase();
+    let language = 'plaintext';
+    if (fileExtension === 'cpp' || fileExtension === 'c' || fileExtension === 'h') {
+        language = 'cpp';
+    } else if (fileExtension === 'py') {
+        language = 'python';
+    }
+    editor.updateOptions({ language: language });
+}
+
+function closeTab(filename) {
+    delete openFiles[filename];
+    const tab = document.querySelector(`.tab[data-filename="${filename}"]`);
+    if (tab) tab.remove();
+
+    if (currentFile === filename) {
+        const remainingTabs = Object.keys(openFiles);
+        if (remainingTabs.length > 0) {
+            switchToTab(remainingTabs[remainingTabs.length - 1]);
+        } else {
+            editor.setValue('// Select a file to edit');
+            currentFile = '';
+            editor.updateOptions({ language: 'plaintext' });
+        }
+    }
+}
+
 
 
 
