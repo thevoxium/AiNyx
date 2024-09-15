@@ -163,6 +163,12 @@ body {
     background: linear-gradient(to right, #8b5cf6, #6366f1);
 }
 
+.btn-close-io{
+    background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(65,11,105,1) 100%, rgba(0,46,255,1) 100%);}
+.btn-close-io:hover{
+    background: linear-gradient(90deg, rgba(2,0,36,1) 68%, rgba(65,11,105,1) 100%, rgba(0,46,255,1) 100%);
+}
+
 .btn-save:hover {
     background: linear-gradient(to right, #7c3aed, #4f46e5);
 }

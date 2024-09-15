@@ -17,6 +17,14 @@ require(['vs/editor/editor.main'], function() {
 });
 
 
+let isOpen = true;
+function toggleIO() {
+    isOpen = !isOpen;
+    document.getElementById('io-container').style.display = isOpen ? 'none' : 'flex';
+    document.getElementById('io-container').style.display = isOpen ? 'flex' : 'none';
+    // Add your logic here to actually open/close the I/O container
+}
+
 function updateDirectoryBrowser(data) {
     const directoryList = document.getElementById('directory-list');
     const currentPathElement = document.getElementById('current-path');
