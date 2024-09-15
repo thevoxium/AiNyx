@@ -1,5 +1,3 @@
-# <img src="./static/CodeNode.png" alt="logo" width="100" height="120"> CodeNode
-
 ## Overview
 
 CodeNode is a web-based integrated development environment (IDE) that provides a convenient and efficient way to browse directories, edit code, and interact with a terminal. It is built using Flask for the backend and HTML, CSS, and JavaScript for the frontend.
