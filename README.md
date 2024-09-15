@@ -1,4 +1,5 @@
-![Alt text](./static/CodeNode.png)
+<img src="./static/CodeNode.png" alt="logo" width="400" height="400">
+
 
 # CodeNode
 
