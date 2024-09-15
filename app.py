@@ -63,10 +63,11 @@ def browse_directory():
         return jsonify({"status": "cancelled"})
 
 
+
 @app.route('/file/<path:filepath>')
 def get_file_content(filepath):
     try:
-        full_path = os.path.join('/', filepath)  # Ensure the path starts with '/'
+        full_path = os.path.join(os.getcwd(), filepath)
         with open(full_path, 'r') as file:
             content = file.read()
         return jsonify({"status": "success", "content": content})
@@ -97,18 +98,21 @@ def get_files():
 
 
 
+
 def create_directory_structure(path):
+    base_path = os.getcwd()
     structure = {"name": os.path.basename(path), "type": "directory", "children": []}
     try:
         with os.scandir(path) as entries:
             for entry in entries:
+                relative_path = os.path.relpath(entry.path, base_path)
                 if entry.is_dir():
                     structure["children"].append(create_directory_structure(entry.path))
                 else:
                     structure["children"].append({
                         "name": entry.name,
                         "type": "file",
-                        "path": os.path.relpath(entry.path, os.getcwd())
+                        "path": relative_path
                     })
     except PermissionError:
         structure["children"].append({"name": "Permission Denied", "type": "error"})

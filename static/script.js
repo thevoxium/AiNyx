@@ -619,9 +619,8 @@ let currentDirectory = '';
 
 
 function loadFile(fullPath) {
-    // Remove the leading '/' if it exists to match the route in Flask
-    const path = fullPath.startsWith('/') ? fullPath.slice(1) : fullPath;
-    fetch(`/file/${path}`)
+    console.log('Loading file:', fullPath);  // Add this line for debugging
+    fetch(`/file/${encodeURIComponent(fullPath)}`)
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
@@ -630,9 +629,11 @@ function loadFile(fullPath) {
             } else {
                 showNotification('Error loading file: ' + data.message, 'error');
             }
+        })
+        .catch(error => {
+            showNotification('Error: ' + error.message, 'error');
         });
 }
-
 
 
 
@@ -661,72 +662,10 @@ function loadFile(fullPath) {
         });
 }
 
-function openFileTab(filename, content) {
-    if (!document.querySelector(`.tab[data-filename="${filename}"]`)) {
-        createTab(filename);
-    }
-    switchToTab(filename);
-}
 
-function createTab(filename) {
-    const tabsContainer = document.getElementById('tabs-container');
-    const tab = document.createElement('div');
-    tab.className = 'tab';
-    tab.setAttribute('data-filename', filename);
-    tab.textContent = filename;
-    tab.onclick = () => switchToTab(filename);
-    
-    const closeButton = document.createElement('span');
-    closeButton.className = 'close-tab';
-    closeButton.textContent = '×';
-    closeButton.onclick = (e) => {
-        e.stopPropagation();
-        closeTab(filename);
-    };
-    
-    tab.appendChild(closeButton);
-    tabsContainer.appendChild(tab);
-}
 
-function switchToTab(filename) {
-    if (currentFile === filename) return;
 
-    currentFile = filename;
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-        if (tab.getAttribute('data-filename') === filename) {
-            tab.classList.add('active');
-        }
-    });
-    editor.setValue(openFiles[filename]);
-    
-    // Update the editor's language based on the file extension
-    const fileExtension = filename.split('.').pop().toLowerCase();
-    let language = 'plaintext';
-    if (fileExtension === 'cpp' || fileExtension === 'c' || fileExtension === 'h') {
-        language = 'cpp';
-    } else if (fileExtension === 'py') {
-        language = 'python';
-    }
-    editor.updateOptions({ language: language });
-}
 
-function closeTab(filename) {
-    delete openFiles[filename];
-    const tab = document.querySelector(`.tab[data-filename="${filename}"]`);
-    if (tab) tab.remove();
-
-    if (currentFile === filename) {
-        const remainingTabs = Object.keys(openFiles);
-        if (remainingTabs.length > 0) {
-            switchToTab(remainingTabs[remainingTabs.length - 1]);
-        } else {
-            editor.setValue('// Select a file to edit');
-            currentFile = '';
-            editor.updateOptions({ language: 'plaintext' });
-        }
-    }
-}
 
 
 let commandPalette = null;
@@ -834,10 +773,12 @@ function updateFileTree(structure) {
     fileTree.appendChild(createFileTreeItem(structure));
 }
 
-function createFileTreeItem(item) {
+function createFileTreeItem(item, parentPath = '') {
     const itemElement = document.createElement('div');
     itemElement.className = 'file-tree-item';
 
+    const fullPath = item.path || (parentPath ? `${parentPath}/${item.name}` : item.name);
+    
     const iconSvg = item.type === 'directory' 
         ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>'
         : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>';
@@ -854,22 +795,24 @@ function createFileTreeItem(item) {
 
         if (item.children && Array.isArray(item.children)) {
             item.children.forEach(child => {
-                childrenContainer.appendChild(createFileTreeItem(child));
+                childrenContainer.appendChild(createFileTreeItem(child, fullPath));
             });
         }
 
         itemElement.appendChild(childrenContainer);
 
-        itemElement.querySelector('.file-tree-name').addEventListener('click', () => {
+        itemElement.querySelector('.file-tree-name').addEventListener('click', (e) => {
+            e.stopPropagation();
             childrenContainer.style.display = childrenContainer.style.display === 'none' ? 'block' : 'none';
             itemElement.classList.toggle('expanded');
         });
     } else {
-        itemElement.addEventListener('click', () => loadFile(item.path));
+        itemElement.addEventListener('click', () => loadFile(fullPath));
     }
 
     return itemElement;
 }
+
 
 function addNewFile(filePath) {
     fetch('/add_file', {
@@ -889,6 +832,62 @@ function addNewFile(filePath) {
     .catch(error => {
         showNotification('Error: ' + error.message, 'error');
     });
+}
+
+
+
+
+
+//////////////
+
+function openFileTab(filename, content) {
+    if (!document.querySelector(`.tab[data-filename="${filename}"]`)) {
+        createTab(filename);
+    }
+    switchToTab(filename);
+    editor.setValue(content);
+}
+
+function createTab(filename) {
+    const tabsContainer = document.getElementById('tabs-container');
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.setAttribute('data-filename', filename);
+    tab.textContent = filename.split('/').pop(); // Show only the file name, not the full path
+    tab.onclick = () => switchToTab(filename);
+    
+    const closeButton = document.createElement('span');
+    closeButton.className = 'close-tab';
+    closeButton.textContent = '×';
+    closeButton.onclick = (e) => {
+        e.stopPropagation();
+        closeTab(filename);
+    };
+    
+    tab.appendChild(closeButton);
+    tabsContainer.appendChild(tab);
+}
+
+function switchToTab(filename) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    const tab = document.querySelector(`.tab[data-filename="${filename}"]`);
+    if (tab) {
+        tab.classList.add('active');
+        editor.setValue(openFiles[filename]);
+    }
+}
+
+function closeTab(filename) {
+    const tab = document.querySelector(`.tab[data-filename="${filename}"]`);
+    if (tab) {
+        tab.remove();
+        delete openFiles[filename];
+        if (Object.keys(openFiles).length > 0) {
+            switchToTab(Object.keys(openFiles)[0]);
+        } else {
+            editor.setValue('');
+        }
+    }
 }
 
 
