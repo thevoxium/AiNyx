@@ -1,4 +1,6 @@
-# CodeNode Documentation
+![Alt text](./static/CodeNode.png)
+
+# CodeNode
 
 ## Overview
 
