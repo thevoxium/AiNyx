@@ -639,14 +639,6 @@ function loadFile(fullPath) {
 
 
 
-
-
-
-
-
-
-
-/////////////////////
 function loadFile(fullPath) {
     // Remove the leading '/' if it exists to match the route in Flask
     const path = fullPath.startsWith('/') ? fullPath.slice(1) : fullPath;
@@ -723,6 +715,8 @@ function handleCommandInput(e) {
     const input = e.target.value.toLowerCase();
     if (input.startsWith('add:')) {
         commandList.innerHTML = '<li>Create a new file</li>';
+    } else if (input.startsWith('d:')) {
+        commandList.innerHTML = '<li>Delete a file</li>';
     } else {
         commandList.innerHTML = '';
     }
@@ -732,10 +726,12 @@ function executeCommand(command) {
     if (command.toLowerCase().startsWith('add:')) {
         const filePath = command.slice(4).trim();
         addNewFile(filePath);
+    } else if (command.toLowerCase().startsWith('d:')) {
+        const filePath = command.slice(2).trim();
+        deleteFile(filePath);
     }
     hideCommandPalette();
 }
-
 
 
 function showNotification(message, type) {
@@ -748,10 +744,6 @@ function showNotification(message, type) {
 
 
 
-
-
-
-//////////////////////
 function fetchDirectoryStructure() {
     fetch('/get_directory_structure')
         .then(response => response.json())
@@ -835,10 +827,30 @@ function addNewFile(filePath) {
 }
 
 
+function deleteFile(filePath) {
+    if (confirm(`Are you sure you want to delete "${filePath}"?`)) {
+        fetch('/delete_file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_path: filePath })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showNotification('File deleted successfully: ' + filePath, 'success');
+                fetchDirectoryStructure();  // Refresh the file tree
+                closeTab(filePath);  // Close the tab if the file was open
+            } else {
+                showNotification('Error deleting file: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error: ' + error.message, 'error');
+        });
+    }
+}
 
 
-
-//////////////
 
 function openFileTab(filename, content) {
     if (!document.querySelector(`.tab[data-filename="${filename}"]`)) {

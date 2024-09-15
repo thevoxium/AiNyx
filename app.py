@@ -16,7 +16,7 @@ import logging
 import tkinter as tk
 from tkinter import filedialog
 import re
-from browse import DirectorySelector
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a real secret key
@@ -429,6 +429,28 @@ def add_file():
             pass  # Create an empty file
         
         return jsonify({"status": "success", "message": f"File created: {file_path}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+
+
+@app.route('/delete_file', methods=['POST'])
+def delete_file():
+    data = request.json
+    file_path = data.get('file_path')
+    
+    if not file_path:
+        return jsonify({"status": "error", "message": "File path is required"})
+    
+    try:
+        full_path = os.path.join(os.getcwd(), file_path)
+        
+        if os.path.isfile(full_path):
+            os.remove(full_path)
+            return jsonify({"status": "success", "message": f"File deleted: {file_path}"})
+        else:
+            return jsonify({"status": "error", "message": f"File not found: {file_path}"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
