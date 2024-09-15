@@ -134,60 +134,61 @@ body {
 
 
 /* Button styles */
-#button-container {
-    padding: 15px;
+
+
+.button-container {
     background-color: #252526;
-    display: flex;
-    align-items: center;
-}
-
-.btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 8px;
-    border: none;
+    padding: 10px;
     border-radius: 4px;
-    color: white;
-    font-weight: 500;
+    display: flex;
+    gap: 10px;
+}
+.btn {
+    background-color: #252526;
+    border: none;
+    color: #cccccc;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-right: 10px;
+    padding: 6px 12px;
+    border-radius: 3px;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+.btn:hover {
+    background-color: #3c3c3c;
+    color: #47ed68;
+}
+.btn svg {
+    width: 16px;
+    height: 16px;
+}
+.tooltip {
+    position: relative;
+}
+.tooltip::after {
+    content: attr(aria-label);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #3c3c3c;
+    color: #cccccc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+.tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
 }
 
-.btn .icon {
-    margin-right: 8px;
-}
 
-.btn-save {
-    background: linear-gradient(to right, #8b5cf6, #6366f1);
-}
-
-.btn-close-io{
-    background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(65,11,105,1) 100%, rgba(0,46,255,1) 100%);}
-.btn-close-io:hover{
-    background: linear-gradient(90deg, rgba(2,0,36,1) 68%, rgba(65,11,105,1) 100%, rgba(0,46,255,1) 100%);
-}
-
-.btn-save:hover {
-    background: linear-gradient(to right, #7c3aed, #4f46e5);
-}
-
-.btn-run {
-    background: linear-gradient(to right, #10b981, #14b8a6);
-}
-
-.btn-run:hover {
-    background: linear-gradient(to right, #059669, #0d9488);
-}
-
-.btn-assistant {
-    background: linear-gradient(to right, #ec4899, #f43f5e);
-}
-
-.btn-assistant:hover {
-    background: linear-gradient(to right, #db2777, #e11d48);
-}
 
 #save-notification {
     margin-left: 10px;
