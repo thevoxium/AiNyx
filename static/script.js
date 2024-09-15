@@ -592,18 +592,6 @@ function browseDirectory() {
         });
 }
 
-function fetchDirectoryStructure() {
-    fetch('/get_directory_structure')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                updateFileTree(data.structure, data.current_directory);
-            } else {
-                showNotification('Error fetching directory structure: ' + data.message, 'error');
-            }
-        });
-}
-
 
 
 function getFileIcon(fileName) {
@@ -629,53 +617,6 @@ function getFileIcon(fileName) {
 
 let currentDirectory = '';
 
-function updateFileTree(structure, currentPath) {
-    currentDirectory = currentPath;
-    const fileTree = document.getElementById('file-tree');
-    //fileTree.innerHTML = `<div class="file-tree-item">${currentPath}</div>`;
-    fileTree.appendChild(createFileTreeItem(structure, currentPath));
-}
-
-function createFileTreeItem(item, parentPath) {
-    const itemElement = document.createElement('div');
-    itemElement.className = 'file-tree-item';
-    
-    if (Array.isArray(item)) {
-        item.forEach(subItem => {
-            itemElement.appendChild(createFileTreeItem(subItem, parentPath));
-        });
-    } else {
-        const fullPath = parentPath + '/' + item.name;
-        const icon = item.type === 'folder' 
-            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>'
-            : getFileIcon(item.name);
-        
-        itemElement.innerHTML = `
-            <span class="file-tree-icon">${icon}</span>
-            <span class="file-tree-name">${item.name}</span>
-        `;
-        
-        if (item.type === 'folder') {
-            itemElement.classList.add('file-tree-folder');
-            const childrenContainer = document.createElement('div');
-            childrenContainer.className = 'file-tree-children';
-            childrenContainer.style.display = 'none';
-            item.children.forEach(child => {
-                childrenContainer.appendChild(createFileTreeItem(child, fullPath));
-            });
-            itemElement.appendChild(childrenContainer);
-            
-            itemElement.querySelector('.file-tree-name').addEventListener('click', () => {
-                childrenContainer.style.display = childrenContainer.style.display === 'none' ? 'block' : 'none';
-                itemElement.classList.toggle('expanded');
-            });
-        } else {
-            itemElement.addEventListener('click', () => loadFile(fullPath));
-        }
-    }
-    
-    return itemElement;
-}
 
 function loadFile(fullPath) {
     // Remove the leading '/' if it exists to match the route in Flask
@@ -786,6 +727,170 @@ function closeTab(filename) {
         }
     }
 }
+
+
+let commandPalette = null;
+let commandInput = null;
+let commandList = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    commandPalette = document.getElementById('command-palette');
+    commandInput = document.getElementById('command-input');
+    commandList = document.getElementById('command-list');
+
+    // Show command palette on Ctrl+P
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'p') {
+            e.preventDefault();
+            showCommandPalette();
+        }
+    });
+
+    // Hide command palette when clicking outside
+    document.addEventListener('click', (e) => {
+        if (commandPalette && !commandPalette.contains(e.target)) {
+            hideCommandPalette();
+        }
+    });
+
+    // Prevent hiding when clicking inside the command palette
+    commandPalette.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    // Handle input changes
+    commandInput.addEventListener('input', handleCommandInput);
+
+    // Handle form submission
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            executeCommand(commandInput.value);
+        }
+    });
+});
+
+function showCommandPalette() {
+    commandPalette.classList.remove('hidden');
+    commandInput.focus();
+}
+
+function hideCommandPalette() {
+    commandPalette.classList.add('hidden');
+    commandInput.value = '';
+}
+
+function handleCommandInput(e) {
+    const input = e.target.value.toLowerCase();
+    if (input.startsWith('add:')) {
+        commandList.innerHTML = '<li>Create a new file</li>';
+    } else {
+        commandList.innerHTML = '';
+    }
+}
+
+function executeCommand(command) {
+    if (command.toLowerCase().startsWith('add:')) {
+        const filePath = command.slice(4).trim();
+        addNewFile(filePath);
+    }
+    hideCommandPalette();
+}
+
+
+
+function showNotification(message, type) {
+    console.log(`${type}: ${message}`);
+    // Implement a visual notification system here
+}
+
+
+
+
+
+
+
+
+
+//////////////////////
+function fetchDirectoryStructure() {
+    fetch('/get_directory_structure')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateFileTree(data.structure);
+            } else {
+                showNotification('Error fetching directory structure: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error: ' + error.message, 'error');
+        });
+}
+
+function updateFileTree(structure) {
+    const fileTree = document.getElementById('file-tree');
+    fileTree.innerHTML = ''; // Clear the existing tree
+    fileTree.appendChild(createFileTreeItem(structure));
+}
+
+function createFileTreeItem(item) {
+    const itemElement = document.createElement('div');
+    itemElement.className = 'file-tree-item';
+
+    const iconSvg = item.type === 'directory' 
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>';
+
+    itemElement.innerHTML = `
+        <span class="file-tree-icon">${iconSvg}</span>
+        <span class="file-tree-name">${item.name}</span>
+    `;
+
+    if (item.type === 'directory') {
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'file-tree-children';
+        childrenContainer.style.display = 'none';
+
+        if (item.children && Array.isArray(item.children)) {
+            item.children.forEach(child => {
+                childrenContainer.appendChild(createFileTreeItem(child));
+            });
+        }
+
+        itemElement.appendChild(childrenContainer);
+
+        itemElement.querySelector('.file-tree-name').addEventListener('click', () => {
+            childrenContainer.style.display = childrenContainer.style.display === 'none' ? 'block' : 'none';
+            itemElement.classList.toggle('expanded');
+        });
+    } else {
+        itemElement.addEventListener('click', () => loadFile(item.path));
+    }
+
+    return itemElement;
+}
+
+function addNewFile(filePath) {
+    fetch('/add_file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_path: filePath })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('File created successfully: ' + filePath, 'success');
+            fetchDirectoryStructure();  // Refresh the file tree
+        } else {
+            showNotification('Error creating file: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
 
 
 

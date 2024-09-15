@@ -886,3 +886,57 @@ body {
 }
 
 /* Adjust the main content area to accommodate the new sidebar layout */
+
+#command-palette {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 500px;
+    max-width: 90%;
+    background-color: #2c2c2c;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+#command-palette.hidden {
+    display: none;
+}
+
+#command-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    background-color: #3c3c3c;
+    color: #fff;
+}
+
+#command-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+#command-list li {
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+#command-list li:hover {
+    background-color: #3c3c3c;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#command-palette {
+    /* ... existing styles ... */
+    animation: fadeIn 0.2s ease-out;
+}

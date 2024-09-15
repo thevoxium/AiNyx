@@ -96,36 +96,36 @@ def get_files():
 
 
 
-def get_directory_structure(path):
-    structure = []
-    for item in os.listdir(path):
-        item_path = os.path.join(path, item)
-        if os.path.isdir(item_path):
-            structure.append({
-                'name': item,
-                'type': 'folder',
-                'children': get_directory_structure(item_path)
-            })
-        else:
-            structure.append({
-                'name': item,
-                'type': 'file'
-            })
+
+def create_directory_structure(path):
+    structure = {"name": os.path.basename(path), "type": "directory", "children": []}
+    try:
+        with os.scandir(path) as entries:
+            for entry in entries:
+                if entry.is_dir():
+                    structure["children"].append(create_directory_structure(entry.path))
+                else:
+                    structure["children"].append({
+                        "name": entry.name,
+                        "type": "file",
+                        "path": os.path.relpath(entry.path, os.getcwd())
+                    })
+    except PermissionError:
+        structure["children"].append({"name": "Permission Denied", "type": "error"})
     return structure
 
-
-@app.route('/get_directory_structure', methods=['GET'])
-def get_directory_structure_route():
-    directory = session.get('current_directory', '')
-    if not directory:
-        return jsonify({"status": "error", "message": "No directory selected"})
-    
-    structure = get_directory_structure(directory)
-    return jsonify({
-        "status": "success",
-        "structure": structure,
-        "current_directory": directory
-    })
+@app.route('/get_directory_structure')
+def get_directory_structure():
+    try:
+        current_directory = os.getcwd()  # Or use a predefined root directory
+        structure = create_directory_structure(current_directory)
+        return jsonify({
+            "status": "success",
+            "current_directory": current_directory,
+            "structure": structure
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 
 @app.route('/save', methods=['POST'])
@@ -400,6 +400,31 @@ def get_commits():
         return jsonify({"status": "success", "commits": commits})
     except subprocess.CalledProcessError as e:
         return jsonify({"status": "error", "message": f"Failed to get commits: {e.stderr}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+
+@app.route('/add_file', methods=['POST'])
+def add_file():
+    data = request.json
+    file_path = data.get('file_path')
+    
+    if not file_path:
+        return jsonify({"status": "error", "message": "File path is required"})
+    
+    try:
+        # Ensure the file path is within the current working directory
+        full_path = os.path.join(os.getcwd(), file_path)
+        
+        # Create any necessary directories
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        
+        # Create the file
+        with open(full_path, 'w') as f:
+            pass  # Create an empty file
+        
+        return jsonify({"status": "success", "message": f"File created: {file_path}"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
