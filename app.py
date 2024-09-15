@@ -109,10 +109,19 @@ def get_file_content(filepath):
     try:
         session_state = load_session_state()
         current_directory = session_state.get("selected_directory", os.getcwd())
-        full_path = os.path.join(current_directory, filepath)
-        with open(full_path, 'r') as file:
-            content = file.read()
-        return jsonify({"status": "success", "content": content})
+        full_path = '/'+filepath
+        print('#############')
+        print(full_path)        
+        # Ensure the requested file is within the current directory
+        if not os.path.abspath(full_path).startswith(os.path.abspath(current_directory)):
+            return jsonify({"status": "error", "message": "Access denied"})
+        
+        if os.path.isfile(full_path):
+            with open(full_path, 'r') as file:
+                content = file.read()
+            return jsonify({"status": "success", "content": content})
+        else:
+            return jsonify({"status": "error", "message": "File not found"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
@@ -151,10 +160,13 @@ def create_directory_structure(path):
                 if entry.is_dir():
                     structure["children"].append(create_directory_structure(entry.path))
                 else:
+                    print("&&&&&&&&&&&&&&&&&&&&&&&");
+                    print(entry.path)
+                    print(path)
                     structure["children"].append({
                         "name": entry.name,
                         "type": "file",
-                        "path": os.path.relpath(entry.path, path)
+                        "path": entry.path
                     })
     except PermissionError:
         structure["children"].append({"name": "Permission Denied", "type": "error"})
