@@ -717,6 +717,8 @@ function handleCommandInput(e) {
         commandList.innerHTML = '<li>Create a new file</li>';
     } else if (input.startsWith('d:')) {
         commandList.innerHTML = '<li>Delete a file</li>';
+    } else if (input.startsWith('r:')) {
+        commandList.innerHTML = '<li>Rename a file</li>';
     } else {
         commandList.innerHTML = '';
     }
@@ -729,6 +731,13 @@ function executeCommand(command) {
     } else if (command.toLowerCase().startsWith('d:')) {
         const filePath = command.slice(2).trim();
         deleteFile(filePath);
+    } else if (command.toLowerCase().startsWith('r:')) {
+        const paths = command.slice(2).split('->').map(p => p.trim());
+        if (paths.length === 2) {
+            renameFile(paths[0], paths[1]);
+        } else {
+            showNotification('Invalid rename command format. Use "r: old_path -> new_path"', 'error');
+        }
     }
     hideCommandPalette();
 }
@@ -804,6 +813,35 @@ function createFileTreeItem(item, parentPath = '') {
 
     return itemElement;
 }
+
+
+
+function renameFile(oldPath, newPath) {
+    fetch('/rename_file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_path: oldPath, new_path: newPath })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('File renamed successfully', 'success');
+            fetchDirectoryStructure();  // Refresh the file tree
+            if (openFiles[oldPath]) {
+                openFiles[newPath] = openFiles[oldPath];
+                delete openFiles[oldPath];
+                closeTab(oldPath);
+                openFileTab(newPath, openFiles[newPath]);
+            }
+        } else {
+            showNotification('Error renaming file: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
 
 
 function addNewFile(filePath) {

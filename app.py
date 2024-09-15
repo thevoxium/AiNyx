@@ -435,6 +435,29 @@ def add_file():
 
 
 
+@app.route('/rename_file', methods=['POST'])
+def rename_file():
+    data = request.json
+    old_path = data.get('old_path')
+    new_path = data.get('new_path')
+    
+    if not old_path or not new_path:
+        return jsonify({"status": "error", "message": "Both old and new file paths are required"})
+    
+    try:
+        full_old_path = os.path.join(os.getcwd(), old_path)
+        full_new_path = os.path.join(os.getcwd(), new_path)
+        
+        if os.path.isfile(full_old_path):
+            os.rename(full_old_path, full_new_path)
+            return jsonify({"status": "success", "message": f"File renamed from {old_path} to {new_path}"})
+        else:
+            return jsonify({"status": "error", "message": f"File not found: {old_path}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+
 @app.route('/delete_file', methods=['POST'])
 def delete_file():
     data = request.json
