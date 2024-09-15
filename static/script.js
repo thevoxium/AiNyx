@@ -31,7 +31,8 @@ function updateDirectoryBrowser(data) {
     
     currentPathElement.textContent = data.current_path;
     directoryList.innerHTML = '';
-
+    console.log('UdfdfdffdffdfdfdfDB');
+    console.log(data.current_path)
     if (data.current_path !== '/') {
         const parentDir = document.createElement('div');
         parentDir.textContent = '..';
@@ -49,7 +50,7 @@ function updateDirectoryBrowser(data) {
     data.files.forEach(file => {
         const fileElement = document.createElement('div');
         fileElement.textContent = file;
-        fileElement.onclick = () => loadFile(file);
+        fileElement.onclick = () => loadFile(data.current_path+'/'+file);
         directoryList.appendChild(fileElement);
     });
 }
@@ -467,6 +468,11 @@ function browseDirectory() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                console.log("updated directory recieved");
+                console.log(data.current_path);
+                console.log(data.directories);
+                fetchDirectoryStructure();
+
                 updateDirectoryBrowser(data);
             } else if (data.status === 'cancelled') {
                 console.log('Directory selection cancelled');
@@ -476,27 +482,7 @@ function browseDirectory() {
         });
 }
 
-function updateDirectoryBrowser(data) {
-    const directoryList = document.getElementById('directory-list');
-    const currentPathElement = document.getElementById('current-path');
-    
-    currentPathElement.textContent = data.current_path;
-    directoryList.innerHTML = '';
 
-    data.directories.forEach(dir => {
-        const dirElement = document.createElement('div');
-        dirElement.textContent = dir;
-        dirElement.onclick = () => loadFile(dir);
-        directoryList.appendChild(dirElement);
-    });
-
-    data.files.forEach(file => {
-        const fileElement = document.createElement('div');
-        fileElement.textContent = file;
-        fileElement.onclick = () => loadFile(file);
-        directoryList.appendChild(fileElement);
-    });
-}
 
 
 
@@ -580,20 +566,6 @@ function closeGitDiff() {
 
 
 
-function browseDirectory() {
-    fetch('/browse_directory')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                fetchDirectoryStructure();
-            } else {
-                showNotification('Error browsing directory: ' + data.message, 'error');
-            }
-        });
-}
-
-
-
 function getFileIcon(fileName) {
     const extension = fileName.split('.').pop().toLowerCase();
     switch (extension) {
@@ -615,11 +587,8 @@ function getFileIcon(fileName) {
 
 
 
-let currentDirectory = '';
-
-
 function loadFile(fullPath) {
-    console.log('Loading file:', fullPath);  // Add this line for debugging
+    console.log('Loading file:', fullPath);
     fetch(`/file/${encodeURIComponent(fullPath)}`)
         .then(response => response.json())
         .then(data => {
@@ -636,23 +605,6 @@ function loadFile(fullPath) {
 }
 
 
-
-
-
-function loadFile(fullPath) {
-    // Remove the leading '/' if it exists to match the route in Flask
-    const path = fullPath.startsWith('/') ? fullPath.slice(1) : fullPath;
-    fetch(`/file/${path}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                openFiles[fullPath] = data.content;
-                openFileTab(fullPath, data.content);
-            } else {
-                showNotification('Error loading file: ' + data.message, 'error');
-            }
-        });
-}
 
 
 
@@ -758,6 +710,8 @@ function fetchDirectoryStructure() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                console.log("fetch directory structure");
+                console.log(data.structure);
                 updateFileTree(data.structure);
             } else {
                 showNotification('Error fetching directory structure: ' + data.message, 'error');
@@ -816,77 +770,7 @@ function createFileTreeItem(item, parentPath = '') {
 
 
 
-function renameFile(oldPath, newPath) {
-    fetch('/rename_file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ old_path: oldPath, new_path: newPath })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            showNotification('File renamed successfully', 'success');
-            fetchDirectoryStructure();  // Refresh the file tree
-            if (openFiles[oldPath]) {
-                openFiles[newPath] = openFiles[oldPath];
-                delete openFiles[oldPath];
-                closeTab(oldPath);
-                openFileTab(newPath, openFiles[newPath]);
-            }
-        } else {
-            showNotification('Error renaming file: ' + data.message, 'error');
-        }
-    })
-    .catch(error => {
-        showNotification('Error: ' + error.message, 'error');
-    });
-}
 
-
-
-function addNewFile(filePath) {
-    fetch('/add_file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_path: filePath })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            showNotification('File created successfully: ' + filePath, 'success');
-            fetchDirectoryStructure();  // Refresh the file tree
-        } else {
-            showNotification('Error creating file: ' + data.message, 'error');
-        }
-    })
-    .catch(error => {
-        showNotification('Error: ' + error.message, 'error');
-    });
-}
-
-
-function deleteFile(filePath) {
-    if (confirm(`Are you sure you want to delete "${filePath}"?`)) {
-        fetch('/delete_file', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_path: filePath })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showNotification('File deleted successfully: ' + filePath, 'success');
-                fetchDirectoryStructure();  // Refresh the file tree
-                closeTab(filePath);  // Close the tab if the file was open
-            } else {
-                showNotification('Error deleting file: ' + data.message, 'error');
-            }
-        })
-        .catch(error => {
-            showNotification('Error: ' + error.message, 'error');
-        });
-    }
-}
 
 
 
@@ -939,6 +823,83 @@ function closeTab(filename) {
         }
     }
 }
+
+
+
+
+
+
+
+function addNewFile(filePath) {
+    fetch('/add_file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_path: filePath })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('File created successfully: ' + filePath, 'success');
+            fetchDirectoryStructure();  // Refresh the file tree
+        } else {
+            showNotification('Error creating file: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+function renameFile(oldPath, newPath) {
+    fetch('/rename_file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_path: oldPath, new_path: newPath })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('File renamed successfully', 'success');
+            fetchDirectoryStructure();  // Refresh the file tree
+            if (openFiles[oldPath]) {
+                openFiles[newPath] = openFiles[oldPath];
+                delete openFiles[oldPath];
+                closeTab(oldPath);
+                openFileTab(newPath, openFiles[newPath]);
+            }
+        } else {
+            showNotification('Error renaming file: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+function deleteFile(filePath) {
+    if (confirm(`Are you sure you want to delete "${filePath}"?`)) {
+        fetch('/delete_file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_path: filePath })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showNotification('File deleted successfully: ' + filePath, 'success');
+                fetchDirectoryStructure();  // Refresh the file tree
+                closeTab(filePath);  // Close the tab if the file was open
+            } else {
+                showNotification('Error deleting file: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error: ' + error.message, 'error');
+        });
+    }
+}
+
+
 
 
 

@@ -16,6 +16,7 @@ import logging
 import tkinter as tk
 from tkinter import filedialog
 import re
+import json
 
 
 app = Flask(__name__)
@@ -25,12 +26,40 @@ app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 
 
+
+
 socketio = SocketIO(app)
 # Configure OpenAI API
 client = OpenAI(                                                                                               
         base_url="https://openrouter.ai/api/v1",                                                                   
         api_key=os.environ.get("OPEN_ROUTER_KEY"),                                                                                           
     )  
+
+
+SESSION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.editor_session')
+os.makedirs(SESSION_DIR, exist_ok=True)
+SESSION_FILE = os.path.join(SESSION_DIR, 'session_state.json')
+
+def load_session_state():
+    try:
+        if os.path.exists(SESSION_FILE) and os.path.getsize(SESSION_FILE) > 0:
+            with open(SESSION_FILE, 'r') as f:
+                return json.load(f)
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON from {SESSION_FILE}. Using default state.")
+    except Exception as e:
+        print(f"Error loading session state: {str(e)}. Using default state.")
+    
+    return {"selected_directory": os.getcwd()}
+
+def save_session_state(state):
+    try:
+        with open(SESSION_FILE, 'w') as f:
+            json.dump(state, f, indent=2)
+    except Exception as e:
+        print(f"Error saving session state: {str(e)}")
+
+
 
 @app.route('/')
 def index():
@@ -51,6 +80,17 @@ def browse_directory():
             directories = [d for d in items if os.path.isdir(os.path.join(directory, d))]
             files = [f for f in items if os.path.isfile(os.path.join(directory, f))]
             session['current_directory'] = os.path.abspath(directory)  # Use absolute path
+            print('current_directory')
+            print(session['current_directory'])
+
+
+            session_state = load_session_state()
+            print("session_state")
+            print(session_state)
+            session_state["selected_directory"] = os.path.abspath(directory)
+            save_session_state(session_state)
+
+
             return jsonify({
                 "status": "success",
                 "current_path": session['current_directory'],
@@ -67,7 +107,9 @@ def browse_directory():
 @app.route('/file/<path:filepath>')
 def get_file_content(filepath):
     try:
-        full_path = os.path.join(os.getcwd(), filepath)
+        session_state = load_session_state()
+        current_directory = session_state.get("selected_directory", os.getcwd())
+        full_path = os.path.join(current_directory, filepath)
         with open(full_path, 'r') as file:
             content = file.read()
         return jsonify({"status": "success", "content": content})
@@ -100,19 +142,19 @@ def get_files():
 
 
 def create_directory_structure(path):
-    base_path = os.getcwd()
+    print(path)
     structure = {"name": os.path.basename(path), "type": "directory", "children": []}
+    print(structure)
     try:
         with os.scandir(path) as entries:
             for entry in entries:
-                relative_path = os.path.relpath(entry.path, base_path)
                 if entry.is_dir():
                     structure["children"].append(create_directory_structure(entry.path))
                 else:
                     structure["children"].append({
                         "name": entry.name,
                         "type": "file",
-                        "path": relative_path
+                        "path": os.path.relpath(entry.path, path)
                     })
     except PermissionError:
         structure["children"].append({"name": "Permission Denied", "type": "error"})
@@ -121,8 +163,16 @@ def create_directory_structure(path):
 @app.route('/get_directory_structure')
 def get_directory_structure():
     try:
-        current_directory = os.getcwd()  # Or use a predefined root directory
+        print("get director structure")
+
+        session_state = load_session_state()
+        current_directory = session_state.get("selected_directory", os.getcwd())
+
+        print(current_directory)
+
         structure = create_directory_structure(current_directory)
+        print(structure)
+        print("check here !!!")
         return jsonify({
             "status": "success",
             "current_directory": current_directory,
@@ -409,6 +459,10 @@ def get_commits():
 
 
 
+
+
+
+
 @app.route('/add_file', methods=['POST'])
 def add_file():
     data = request.json
@@ -418,8 +472,9 @@ def add_file():
         return jsonify({"status": "error", "message": "File path is required"})
     
     try:
-        # Ensure the file path is within the current working directory
-        full_path = os.path.join(os.getcwd(), file_path)
+        session_state = load_session_state()
+        current_directory = session_state.get("selected_directory", os.getcwd())
+        full_path = os.path.join(current_directory, file_path)
         
         # Create any necessary directories
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -432,9 +487,6 @@ def add_file():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-
-
-
 @app.route('/rename_file', methods=['POST'])
 def rename_file():
     data = request.json
@@ -445,8 +497,10 @@ def rename_file():
         return jsonify({"status": "error", "message": "Both old and new file paths are required"})
     
     try:
-        full_old_path = os.path.join(os.getcwd(), old_path)
-        full_new_path = os.path.join(os.getcwd(), new_path)
+        session_state = load_session_state()
+        current_directory = session_state.get("selected_directory", os.getcwd())
+        full_old_path = os.path.join(current_directory, old_path)
+        full_new_path = os.path.join(current_directory, new_path)
         
         if os.path.isfile(full_old_path):
             os.rename(full_old_path, full_new_path)
@@ -455,8 +509,6 @@ def rename_file():
             return jsonify({"status": "error", "message": f"File not found: {old_path}"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
-
-
 
 @app.route('/delete_file', methods=['POST'])
 def delete_file():
@@ -467,7 +519,9 @@ def delete_file():
         return jsonify({"status": "error", "message": "File path is required"})
     
     try:
-        full_path = os.path.join(os.getcwd(), file_path)
+        session_state = load_session_state()
+        current_directory = session_state.get("selected_directory", os.getcwd())
+        full_path = os.path.join(current_directory, file_path)
         
         if os.path.isfile(full_path):
             os.remove(full_path)
@@ -476,6 +530,7 @@ def delete_file():
             return jsonify({"status": "error", "message": f"File not found: {file_path}"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
 
 
 if __name__ == '__main__':
