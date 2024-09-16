@@ -3,18 +3,204 @@ let openFiles = {};
 let currentFile = '';
 let currentPath = '/';
 
-require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs' } });
 
+const catppuccinMonacoTheme = {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+        { token: '', foreground: 'cdd6f4', background: '1e1e2e' },
+        { token: 'keyword', foreground: 'cba6f7' },
+        { token: 'operator', foreground: '89dceb' },
+        { token: 'variable', foreground: 'f5e0dc' },
+        { token: 'function', foreground: '89b4fa' },
+        { token: 'comment', foreground: '6c7086' },
+        { token: 'number', foreground: 'fab387' },
+        { token: 'string', foreground: 'a6e3a1' },
+        { token: 'type', foreground: 'f9e2af' },
+        // HTML-specific
+        { token: 'tag', foreground: '89b4fa' },
+        { token: 'attribute.name', foreground: 'f9e2af' },
+        { token: 'attribute.value', foreground: 'a6e3a1' },
+        // CSS-specific
+        { token: 'selector', foreground: 'f5c2e7' },
+        { token: 'property', foreground: '89dceb' },
+        // Add more language-specific rules as needed
+    ],
+    colors: {
+        'editor.background': '#1e1e2e',
+        'editor.foreground': '#cdd6f4',
+        'editorLineNumber.foreground': '#6c7086',
+        'editorCursor.foreground': '#f5e0dc',
+        'editor.selectionBackground': '#45475a',
+        'editor.inactiveSelectionBackground': '#313244',
+        'editorIndentGuide.background': '#313244',
+        'editorIndentGuide.activeBackground': '#45475a',
+    }
+};
+
+function getLanguageFromFilename(filename) {
+    const extension = filename.split('.').pop().toLowerCase();
+    const languageMap = {
+        'js': 'javascript',
+        'py': 'python',
+        'html': 'html',
+        'css': 'css',
+        'json': 'json',
+        'md': 'markdown',
+        'cpp': 'cpp',
+        'c': 'c',
+        'h': 'cpp',
+        'hpp': 'cpp',
+        'txt': 'plaintext'
+        // Add more mappings as needed
+    };
+    return languageMap[extension] || 'plaintext';
+}
+
+
+
+
+function loadLanguageSupport(language) {
+    return new Promise((resolve) => {
+        switch (language) {
+            case 'javascript':
+            case 'typescript':
+                require(['vs/language/typescript/tsMode'], function (tsMode) {
+                    tsMode.setupTypeScript(monaco);
+                    tsMode.setupJavaScript(monaco);
+                    resolve();
+                });
+                break;
+            case 'css':
+                require(['vs/language/css/cssMode'], function (cssMode) {
+                    cssMode.setupCSS(monaco);
+                    resolve();
+                });
+                break;
+            case 'html':
+                require(['vs/language/html/htmlMode'], function (htmlMode) {
+                    htmlMode.setupHTML(monaco);
+                    resolve();
+                });
+                break;
+            case 'json':
+                require(['vs/language/json/jsonMode'], function (jsonMode) {
+                    jsonMode.setupJSON(monaco);
+                    resolve();
+                });
+                break;
+            case 'python':
+                require(['vs/basic-languages/python/python'], function (pyMode) {
+                    monaco.languages.setMonarchTokensProvider('python', pyMode.language);
+                    monaco.languages.setLanguageConfiguration('python', pyMode.conf);
+                    resolve();
+                });
+                break;
+            case 'cpp':
+            case 'c':
+                require(['vs/basic-languages/cpp/cpp'], function (cppMode) {
+                    monaco.languages.setMonarchTokensProvider('cpp', cppMode.language);
+                    monaco.languages.setLanguageConfiguration('cpp', cppMode.conf);
+                    resolve();
+                });
+                break;
+            case 'java':
+                require(['vs/basic-languages/java/java'], function (javaMode) {
+                    monaco.languages.setMonarchTokensProvider('java', javaMode.language);
+                    monaco.languages.setLanguageConfiguration('java', javaMode.conf);
+                    resolve();
+                });
+                break;
+            case 'markdown':
+                require(['vs/basic-languages/markdown/markdown'], function (mdMode) {
+                    monaco.languages.setMonarchTokensProvider('markdown', mdMode.language);
+                    monaco.languages.setLanguageConfiguration('markdown', mdMode.conf);
+                    resolve();
+                });
+                break;
+            case 'yaml':
+                require(['vs/basic-languages/yaml/yaml'], function (yamlMode) {
+                    monaco.languages.setMonarchTokensProvider('yaml', yamlMode.language);
+                    monaco.languages.setLanguageConfiguration('yaml', yamlMode.conf);
+                    resolve();
+                });
+                break;
+            case 'sql':
+                require(['vs/basic-languages/sql/sql'], function (sqlMode) {
+                    monaco.languages.setMonarchTokensProvider('sql', sqlMode.language);
+                    monaco.languages.setLanguageConfiguration('sql', sqlMode.conf);
+                    resolve();
+                });
+                break;
+            case 'powershell':
+                require(['vs/basic-languages/powershell/powershell'], function (psMode) {
+                    monaco.languages.setMonarchTokensProvider('powershell', psMode.language);
+                    monaco.languages.setLanguageConfiguration('powershell', psMode.conf);
+                    resolve();
+                });
+                break;
+            case 'csharp':
+                require(['vs/basic-languages/csharp/csharp'], function (csMode) {
+                    monaco.languages.setMonarchTokensProvider('csharp', csMode.language);
+                    monaco.languages.setLanguageConfiguration('csharp', csMode.conf);
+                    resolve();
+                });
+                break;
+            default:
+                console.warn(`Language support for ${language} is not explicitly defined.`);
+                resolve();
+        }
+    });
+}
+
+
+
+
+require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs' } });
 require(['vs/editor/editor.main'], function() {
+
+
+    monaco.editor.defineTheme('catppuccin-mocha', catppuccinMonacoTheme);
     editor = monaco.editor.create(document.getElementById('editor'), {
         value: '// Select a file to edit',
-        language: 'cpp',
-        theme: 'vs-dark',
-        automaticLayout: true
+        language: 'plaintext', 
+        theme: 'catppuccin-mocha',
+        automaticLayout: true,
+        lineNumbers: 'on',
+        glyphMargin: false,
+        folding: false,
+        lineDecorationsWidth: 10,
+        lineNumbersMinChars: 3,
+        padding: {
+            top: 15
+        }
     });
+
+    // Adjust editor layout after initialization
+    setTimeout(() => {
+        editor.layout();
+    }, 100);
+
+    // Add resize listener to ensure proper layout on window resize
+    window.addEventListener('resize', () => {
+        editor.layout();
+    });
+
     browseDirectory('/');
     initializeResizers();
 });
+
+function updateEditorLayout() {
+    if (editor) {
+        const editorElement = document.getElementById('editor');
+        const rect = editorElement.getBoundingClientRect();
+        editor.layout({
+            width: rect.width,
+            height: rect.height
+        });
+    }
+}
+
 
 
 let isOpen = false;
@@ -611,7 +797,6 @@ function loadFile(fullPath) {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                openFiles[fullPath] = data.content;
                 openFileTab(fullPath, data.content);
             } else {
                 showNotification('Error loading file: ' + data.message, 'error');
@@ -745,24 +930,27 @@ function updateFileTree(structure) {
     fileTree.innerHTML = ''; // Clear the existing tree
     console.log("update file tree");
     console.log(structure)
-    fileTree.appendChild(createFileTreeItem(structure));
+    fileTree.appendChild(createFileTreeItem(structure, 0));
 }
 
-function createFileTreeItem(item, parentPath = '') {
+function createFileTreeItem(item, depth = 0) {
     const itemElement = document.createElement('div');
     itemElement.className = 'file-tree-item';
+    itemElement.style.paddingLeft = `${depth * 20}px`; // Indentation
 
-    const fullPath = item.path
-    console.log("inside create file tree");
+    const fullPath = item.path;
     
     const iconSvg = item.type === 'directory' 
         ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>'
         : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>';
 
-    itemElement.innerHTML = `
+    const itemContent = document.createElement('div');
+    itemContent.className = 'file-tree-item-content';
+    itemContent.innerHTML = `
         <span class="file-tree-icon">${iconSvg}</span>
         <span class="file-tree-name">${item.name}</span>
     `;
+    itemElement.appendChild(itemContent);
 
     if (item.type === 'directory') {
         const childrenContainer = document.createElement('div');
@@ -771,28 +959,23 @@ function createFileTreeItem(item, parentPath = '') {
 
         if (item.children && Array.isArray(item.children)) {
             item.children.forEach(child => {
-                childrenContainer.appendChild(createFileTreeItem(child, fullPath));
+                childrenContainer.appendChild(createFileTreeItem(child, depth + 1));
             });
         }
 
         itemElement.appendChild(childrenContainer);
 
-        itemElement.querySelector('.file-tree-name').addEventListener('click', (e) => {
+        itemContent.addEventListener('click', (e) => {
             e.stopPropagation();
             childrenContainer.style.display = childrenContainer.style.display === 'none' ? 'block' : 'none';
             itemElement.classList.toggle('expanded');
         });
     } else {
-        //console.log(fullPath)
-        itemElement.addEventListener('click', () => loadFile(fullPath));
+        itemContent.addEventListener('click', () => loadFile(fullPath));
     }
 
     return itemElement;
 }
-
-
-
-
 
 
 
@@ -801,7 +984,18 @@ function openFileTab(filename, content) {
         createTab(filename);
     }
     switchToTab(filename);
-    editor.setValue(content);
+    currentFile = filename;
+
+    const language = getLanguageFromFilename(filename);
+    
+    if (!openFiles[filename]) {
+        openFiles[filename] = {
+            model: monaco.editor.createModel(content, language)
+        };
+    }
+    
+    editor.setModel(openFiles[filename].model);
+    editor.updateOptions({ language: language });
 }
 
 function createTab(filename) {
@@ -829,7 +1023,11 @@ function switchToTab(filename) {
     const tab = document.querySelector(`.tab[data-filename="${filename}"]`);
     if (tab) {
         tab.classList.add('active');
-        editor.setValue(openFiles[filename]);
+        if (openFiles[filename] && openFiles[filename].model) {
+            editor.setModel(openFiles[filename].model);
+        } else {
+            console.error('Model not found for file:', filename);
+        }
     }
 }
 
@@ -837,11 +1035,14 @@ function closeTab(filename) {
     const tab = document.querySelector(`.tab[data-filename="${filename}"]`);
     if (tab) {
         tab.remove();
+        if (openFiles[filename] && openFiles[filename].model) {
+            openFiles[filename].model.dispose();
+        }
         delete openFiles[filename];
         if (Object.keys(openFiles).length > 0) {
             switchToTab(Object.keys(openFiles)[0]);
         } else {
-            editor.setValue('');
+            editor.setModel(monaco.editor.createModel('', 'plaintext'));
         }
     }
 }
