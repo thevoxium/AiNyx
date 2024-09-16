@@ -19,6 +19,11 @@ import re
 import json
 
 
+from flask import send_from_directory
+
+
+
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a real secret key
 
@@ -102,6 +107,14 @@ def browse_directory():
     else:
         return jsonify({"status": "cancelled"})
 
+
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/service-worker.js')
+def service_worker():
+    return send_from_directory('static', 'service-worker.js')
 
 
 @app.route('/file/<path:filepath>')
