@@ -2,7 +2,7 @@ let editor;
 let openFiles = {};
 let currentFile = '';
 let currentPath = '/';
-
+let expandedFolders = new Set();
 
 const catppuccinMonacoTheme = {
     base: 'vs-dark',
@@ -1053,8 +1053,7 @@ function fetchDirectoryStructure() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                console.log("fetch directory structure");
-                console.log(data.structure);
+                console.log("Fetched new directory structure");
                 updateFileTree(data.structure);
             } else {
                 showNotification('Error fetching directory structure: ' + data.message, 'error');
@@ -1065,18 +1064,21 @@ function fetchDirectoryStructure() {
         });
 }
 
+
+
 function updateFileTree(structure) {
     const fileTree = document.getElementById('file-tree');
+    const previouslyExpanded = new Set(expandedFolders);  // Create a copy
     fileTree.innerHTML = ''; // Clear the existing tree
-    console.log("update file tree");
-    console.log(structure)
     fileTree.appendChild(createFileTreeItem(structure, 0));
+    expandedFolders = previouslyExpanded;  // Restore the expanded folders
+    restoreExpandedFolders();
 }
-
 function createFileTreeItem(item, depth = 0) {
     const itemElement = document.createElement('div');
     itemElement.className = 'file-tree-item';
     itemElement.style.paddingLeft = `${depth * 20}px`; // Indentation
+    itemElement.setAttribute('data-path', item.path);
 
     const fullPath = item.path;
     
@@ -1107,9 +1109,13 @@ function createFileTreeItem(item, depth = 0) {
 
         itemContent.addEventListener('click', (e) => {
             e.stopPropagation();
-            childrenContainer.style.display = childrenContainer.style.display === 'none' ? 'block' : 'none';
-            itemElement.classList.toggle('expanded');
+            toggleFolder(itemElement, fullPath);
         });
+
+        // If the folder was previously expanded, expand it now
+        if (expandedFolders.has(fullPath)) {
+            toggleFolder(itemElement, fullPath);
+        }
     } else {
         itemContent.addEventListener('click', () => loadFile(fullPath));
     }
@@ -1117,6 +1123,44 @@ function createFileTreeItem(item, depth = 0) {
     return itemElement;
 }
 
+
+function toggleFolder(folderElement, fullPath, forceExpand = false) {
+    const childrenContainer = folderElement.querySelector('.file-tree-children');
+    if (childrenContainer) {
+        const isCurrentlyExpanded = childrenContainer.style.display === 'block';
+        const shouldExpand = forceExpand || !isCurrentlyExpanded;
+        
+        childrenContainer.style.display = shouldExpand ? 'block' : 'none';
+        folderElement.classList.toggle('expanded', shouldExpand);
+        
+        if (shouldExpand) {
+            expandedFolders.add(fullPath);
+        } else {
+            expandedFolders.delete(fullPath);
+        }
+        console.log(`Folder ${fullPath} is now ${shouldExpand ? 'expanded' : 'collapsed'}`);
+        console.log("Current expanded folders:", Array.from(expandedFolders));
+    }
+}
+
+function restoreExpandedFolders() {
+    console.log("Restoring expanded folders...");
+    console.log("Expanded folders before restore:", Array.from(expandedFolders));
+    
+    expandedFolders.forEach(path => {
+        const folderElement = document.querySelector(`.file-tree-item[data-path="${path}"]`);
+        if (folderElement) {
+            console.log(`Restoring folder: ${path}`);
+            toggleFolder(folderElement, path, true);  // Force expand
+        } else {
+            console.log(`Folder not found: ${path}`);
+            // Optional: Remove paths that no longer exist in the file structure
+            // expandedFolders.delete(path);
+        }
+    });
+    
+    console.log("Expanded folders after restore:", Array.from(expandedFolders));
+}
 
 
 function openFileTab(filename, content) {

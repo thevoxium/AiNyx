@@ -163,7 +163,7 @@ def get_files():
 
 
 def create_directory_structure(path):
-    structure = {"name": os.path.basename(path), "type": "directory", "children": []}
+    structure = {"name": os.path.basename(path), "type": "directory", "path": path, "children": []}
 
     try:
         with os.scandir(path) as entries:
@@ -179,6 +179,7 @@ def create_directory_structure(path):
     except PermissionError:
         structure["children"].append({"name": "Permission Denied", "type": "error"})
     return structure
+
 
 @app.route('/get_directory_structure')
 def get_directory_structure():
