@@ -17,6 +17,7 @@ import tkinter as tk
 from tkinter import filedialog
 import re
 import json
+import shutil
 
 
 from flask import send_from_directory
@@ -622,6 +623,74 @@ def delete_file():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
+
+
+
+
+
+
+@app.route('/add_folder', methods=['POST'])
+def add_folder():
+    data = request.json
+    folder_path = data.get('folder_path')
+    
+    if not folder_path:
+        return jsonify({"status": "error", "message": "Folder path is required"})
+    
+    try:
+        session_state = load_session_state()
+        current_directory = session_state.get("selected_directory", os.getcwd())
+        full_path = os.path.join(current_directory, folder_path)
+        
+        os.makedirs(full_path, exist_ok=True)
+        
+        return jsonify({"status": "success", "message": f"Folder created: {folder_path}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+@app.route('/delete_folder', methods=['POST'])
+def delete_folder():
+    data = request.json
+    folder_path = data.get('folder_path')
+    
+    if not folder_path:
+        return jsonify({"status": "error", "message": "Folder path is required"})
+    
+    try:
+        session_state = load_session_state()
+        current_directory = session_state.get("selected_directory", os.getcwd())
+        full_path = os.path.join(current_directory, folder_path)
+        
+        if os.path.isdir(full_path):
+            shutil.rmtree(full_path)
+            return jsonify({"status": "success", "message": f"Folder deleted: {folder_path}"})
+        else:
+            return jsonify({"status": "error", "message": f"Folder not found: {folder_path}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+@app.route('/rename_folder', methods=['POST'])
+def rename_folder():
+    data = request.json
+    old_path = data.get('old_path')
+    new_path = data.get('new_path')
+    
+    if not old_path or not new_path:
+        return jsonify({"status": "error", "message": "Both old and new folder paths are required"})
+    
+    try:
+        session_state = load_session_state()
+        current_directory = session_state.get("selected_directory", os.getcwd())
+        full_old_path = os.path.join(current_directory, old_path)
+        full_new_path = os.path.join(current_directory, new_path)
+        
+        if os.path.isdir(full_old_path):
+            os.rename(full_old_path, full_new_path)
+            return jsonify({"status": "success", "message": f"Folder renamed from {old_path} to {new_path}"})
+        else:
+            return jsonify({"status": "error", "message": f"Folder not found: {old_path}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 
 if __name__ == '__main__':

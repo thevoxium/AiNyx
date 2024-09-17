@@ -711,7 +711,8 @@ body {
 }
 
 .btn-close:hover {
-    background-color: var(--ctp-red);
+    background-color: var(--ctp-green);
+    color: var(--ctp-crust);
 }
 
 .btn-close svg {

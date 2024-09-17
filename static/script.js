@@ -889,9 +889,15 @@ function handleCommandInput(e) {
         commandList.innerHTML = '<li>Delete a file</li>';
     } else if (input.startsWith('r:')) {
         commandList.innerHTML = '<li>Rename a file</li>';
+    } else if (input.startsWith('addf:')) {
+        commandList.innerHTML = '<li>Create a new folder</li>';
+    } else if (input.startsWith('df:')) {
+        commandList.innerHTML = '<li>Delete a folder</li>';
+    } else if (input.startsWith('rf:')) {
+        commandList.innerHTML = '<li>Rename a folder</li>';
     } else if (input.startsWith('prompt:')){
         commandList.innerHTML = '<li>Get AI suggestion for selected code</li>';
-    }else{
+    } else {
         commandList.innerHTML = '';
     }
 }
@@ -910,13 +916,91 @@ function executeCommand(command) {
         } else {
             showNotification('Invalid rename command format. Use "r: old_path -> new_path"', 'error');
         }
-    }else if(command.toLowerCase().startsWith('prompt:')){
+    } else if (command.toLowerCase().startsWith('addf:')) {
+        const folderPath = command.slice(5).trim();
+        addNewFolder(folderPath);
+    } else if (command.toLowerCase().startsWith('df:')) {
+        const folderPath = command.slice(3).trim();
+        deleteFolder(folderPath);
+    } else if (command.toLowerCase().startsWith('rf:')) {
+        const paths = command.slice(3).split('->').map(p => p.trim());
+        if (paths.length === 2) {
+            renameFolder(paths[0], paths[1]);
+        } else {
+            showNotification('Invalid rename folder command format. Use "rf: old_path -> new_path"', 'error');
+        }
+    } else if (command.toLowerCase().startsWith('prompt:')) {
         const prompt = command.slice(7).trim();
         const selectedText = commandPalette.dataset.selectedText;
         getAiSuggestion(prompt, selectedText);
     }
     hideCommandPalette();
 }
+
+
+
+function addNewFolder(folderPath) {
+    fetch('/add_folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder_path: folderPath })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('Folder created successfully: ' + folderPath, 'success');
+            fetchDirectoryStructure();  // Refresh the file tree
+        } else {
+            showNotification('Error creating folder: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+function deleteFolder(folderPath) {
+    if (confirm(`Are you sure you want to delete the folder "${folderPath}" and all its contents?`)) {
+        fetch('/delete_folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folder_path: folderPath })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showNotification('Folder deleted successfully: ' + folderPath, 'success');
+                fetchDirectoryStructure();  // Refresh the file tree
+            } else {
+                showNotification('Error deleting folder: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error: ' + error.message, 'error');
+        });
+    }
+}
+
+function renameFolder(oldPath, newPath) {
+    fetch('/rename_folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_path: oldPath, new_path: newPath })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('Folder renamed successfully', 'success');
+            fetchDirectoryStructure();  // Refresh the file tree
+        } else {
+            showNotification('Error renaming folder: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
 
 
 function getAiSuggestion(prompt, selectedCode) {
