@@ -122,9 +122,7 @@ def get_file_content(filepath):
     try:
         session_state = load_session_state()
         current_directory = session_state.get("selected_directory", os.getcwd())
-        full_path = '/'+filepath
-        print('#############')
-        print(full_path)        
+        full_path = '/'+filepath     
         # Ensure the requested file is within the current directory
         if not os.path.abspath(full_path).startswith(os.path.abspath(current_directory)):
             return jsonify({"status": "error", "message": "Access denied"})
@@ -164,18 +162,14 @@ def get_files():
 
 
 def create_directory_structure(path):
-    print(path)
     structure = {"name": os.path.basename(path), "type": "directory", "children": []}
-    print(structure)
+
     try:
         with os.scandir(path) as entries:
             for entry in entries:
                 if entry.is_dir():
                     structure["children"].append(create_directory_structure(entry.path))
                 else:
-                    print("&&&&&&&&&&&&&&&&&&&&&&&");
-                    print(entry.path)
-                    print(path)
                     structure["children"].append({
                         "name": entry.name,
                         "type": "file",
@@ -196,8 +190,6 @@ def get_directory_structure():
         print(current_directory)
 
         structure = create_directory_structure(current_directory)
-        print(structure)
-        print("check here !!!")
         return jsonify({
             "status": "success",
             "current_directory": current_directory,
@@ -312,6 +304,8 @@ def chat():
     
     # Add the new prompt to the conversation history
     session['conversation_history'].append({"role": "user", "content": prompt})
+    print("check here")
+    print(session['conversation_history'])
     
     # Prepare the messages for the API call
     messages = [
