@@ -41,6 +41,7 @@ body {
 #app {
     display: flex;
     height: 100vh;
+    overflow: hidden; /* Prevent scrolling on the main container */
 }
 
 #sidebar, #chat-container {
@@ -60,10 +61,12 @@ body {
 }
 
 #editor-container {
-    flex: 1;
-    min-width: 300px;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-width: 300px;
+    height: 100%; /* Ensure it takes full height */
+    overflow: hidden; /* Prevent scrolling within the editor container */
 }
 
 #io-container {
@@ -79,7 +82,6 @@ body {
 /* Sidebar styles */
 #directory-browser, #chat-header {
     padding: 15px;
-    border-bottom: 1px solid var(--ctp-surface1);
 }
 
 #directory-browser h2, #chat-header h2, #file-list h2 {
@@ -115,19 +117,14 @@ body {
     background-color: var(--ctp-surface1);
 }
 
-#editor-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    position: relative;
-}
+
 
 #tabs-container {
     display: flex;
     overflow-x: auto;
     background-color: var(--ctp-mantle);
     padding: 5px 5px 0;
-    position: absolute;
+    position: relative;
     top: 0;
     left: 0;
     right: 0;
@@ -181,6 +178,7 @@ body {
 #editor {
     flex-grow: 1;
     margin-top: 32px; /* Match the height of #tabs-container */
+    overflow: auto;
 }
 
 /* Hide scrollbar for tab container */
@@ -193,17 +191,6 @@ body {
     scrollbar-width: none;  /* Firefox */
 }
 
-#editor-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    position: relative;
-}
-
-#editor {
-    flex-grow: 1;
-    margin-top: 32px; /* Match the height of #tabs-container */
-}
 
 /* Ensure the Monaco editor container takes full height */
 .monaco-editor {
@@ -517,12 +504,22 @@ body {
 }
 
 #footer-container {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 15px;
     background-color: var(--ctp-mantle);
     border-top: 1px solid var(--ctp-surface1);
+}
+
+#sidebar, #io-container, #chat-container, #terminal-container {
+    height: 100vh;
+    overflow-y: auto;
 }
 
 #button-container {
@@ -547,16 +544,6 @@ body {
     margin-left: 5px;
 }
 
-/* Adjust the layout to accommodate the new footer */
-#editor-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-#editor {
-    flex-grow: 1;
-}
 
 
 
