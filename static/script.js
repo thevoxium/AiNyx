@@ -1427,4 +1427,25 @@ function updateGitInfo() {
 
 
 
+function clearChatSession() {
+    fetch('/clear_chat_session', {
+        method: 'POST',
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('Chat session cleared', 'success');
+            // Clear the chat messages in the UI
+            document.getElementById('chat-messages').innerHTML = '';
+        } else {
+            showNotification('Error clearing chat session: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+
+
 document.addEventListener('DOMContentLoaded', updateGitInfo);

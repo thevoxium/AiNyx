@@ -46,6 +46,21 @@ SESSION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.editor_
 os.makedirs(SESSION_DIR, exist_ok=True)
 SESSION_FILE = os.path.join(SESSION_DIR, 'session_state.json')
 
+CHAT_SESSION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.editor_session')
+CHAT_SESSION_FILE = os.path.join(CHAT_SESSION_DIR, '.chat_session.json')
+
+
+def load_chat_session():
+    if os.path.exists(CHAT_SESSION_FILE):
+        with open(CHAT_SESSION_FILE, 'r') as f:
+            return json.load(f)
+    return {"conversation_history": [], "tagged_file_contents": {}}
+
+def save_chat_session(chat_session):
+    with open(CHAT_SESSION_FILE, 'w') as f:
+        json.dump(chat_session, f, indent=2)
+
+
 def load_session_state():
     try:
         if os.path.exists(SESSION_FILE) and os.path.getsize(SESSION_FILE) > 0:
@@ -282,37 +297,36 @@ def chat():
     model = data.get('model', 'openai/gpt-4o-mini')  # Default to GPT-4o-mini if not specified
     print(model)
     
-    # Initialize conversation history if it doesn't exist
-    if 'conversation_history' not in session:
-        session['conversation_history'] = []
-
-    # Fetch content of tagged files
-    tagged_file_contents = {}
+    # Load the current chat session
+    chat_session = load_chat_session()
+    
+    # Fetch content of newly tagged files and add to existing tagged files
     session_state = load_session_state()
     current_directory = session_state.get("selected_directory", os.getcwd())
     for file_path in tagged_files:
-        full_path = os.path.join(current_directory, file_path)
-        if os.path.isfile(full_path):
-            with open(full_path, 'r') as file:
-                tagged_file_contents[file_path] = file.read()
-        else:
-            tagged_file_contents[file_path] = f"File not found: {file_path}"
+        if file_path not in chat_session['tagged_file_contents']:
+            full_path = os.path.join(current_directory, file_path)
+            if os.path.isfile(full_path):
+                with open(full_path, 'r') as file:
+                    chat_session['tagged_file_contents'][file_path] = file.read()
+            else:
+                chat_session['tagged_file_contents'][file_path] = f"File not found: {file_path}"
     
-    # Prepare the prompt with tagged file contents
+    # Prepare the prompt with all tagged file contents
     prompt = f"User's question: {user_message}\n\n"
     prompt += f"Current file contents:\n{code}\n\n"
-    for file_path, content in tagged_file_contents.items():
+    for file_path, content in chat_session['tagged_file_contents'].items():
         prompt += f"Contents of {file_path}:\n{content}\n\n"
     
     # Add the new prompt to the conversation history
-    session['conversation_history'].append({"role": "user", "content": prompt})
-    print("check here")
-    print(session['conversation_history'])
+    chat_session['conversation_history'].append({"role": "user", "content": prompt})
+    print("Current conversation history:")
+    print(chat_session['conversation_history'])
     
     # Prepare the messages for the API call
     messages = [
         {"role": "system", "content": "You are a helpful coding assistant. The user will provide you with code and questions about it. Always give your response in markdown format. It should be always markdown, remember that."},
-    ] + session['conversation_history']
+    ] + chat_session['conversation_history']
     
     try:
         response = client.chat.completions.create(
@@ -323,21 +337,31 @@ def chat():
         ai_response = response.choices[0].message.content
         
         # Add the AI's response to the conversation history
-        session['conversation_history'].append({"role": "assistant", "content": ai_response})
+        chat_session['conversation_history'].append({"role": "assistant", "content": ai_response})
         
         # Limit the conversation history to the last 10 messages (5 exchanges)
-        if len(session['conversation_history']) > 10:
-            session['conversation_history'] = session['conversation_history'][-10:]
+        if len(chat_session['conversation_history']) > 10:
+            chat_session['conversation_history'] = chat_session['conversation_history'][-10:]
         
-        # Make sure to save the session after modifying it
-        session.modified = True
+        # Save the updated chat session
+        save_chat_session(chat_session)
         
         return jsonify({"status": "success", "response": ai_response})
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"status": "error", "message": str(e)})
 
+# Add this route to clear the chat session
+@app.route('/clear_chat_session', methods=['POST'])
+def clear_chat_session():
+    if os.path.exists(CHAT_SESSION_FILE):
+        os.remove(CHAT_SESSION_FILE)
+    return jsonify({"status": "success", "message": "Chat session cleared"})
 
+# Call this function when your Flask app starts
+def initialize_chat_session():
+    if not os.path.exists(CHAT_SESSION_FILE):
+        save_chat_session({"conversation_history": [], "tagged_file_contents": {}})
 
 
 
@@ -694,5 +718,10 @@ def rename_folder():
         return jsonify({"status": "error", "message": str(e)})
 
 
+
+
+
+initialize_chat_session()
+
 if __name__ == '__main__':
-    socketio.run(app, debug = True)
+    socketio.run(app)
