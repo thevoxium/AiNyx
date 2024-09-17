@@ -491,6 +491,47 @@ def git_diff():
 
 
 
+
+
+@app.route('/git_info')
+def get_git_info():
+    try:
+        directory = session.get('current_directory', '')
+        if not directory:
+            return jsonify({"status": "error", "message": "No directory selected"})
+
+        # Get current branch
+        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], 
+                                         cwd=directory, text=True).strip()
+
+        # Get commit hash
+        commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], 
+                                              cwd=directory, text=True).strip()
+
+        # Get number of modified files
+        status_output = subprocess.check_output(['git', 'status', '--porcelain'], 
+                                                cwd=directory, text=True)
+        modified_files = len(status_output.splitlines())
+
+        # Get number of unpushed commits
+        unpushed = subprocess.check_output(['git', 'log', '@{u}..'], 
+                                           cwd=directory, text=True)
+        unpushed_commits = len(unpushed.splitlines()) // 6  # Divide by 6 as each commit has 6 lines in the log
+
+        return jsonify({
+            "status": "success",
+            "branch": branch,
+            "commit": commit_hash,
+            "modified_files": modified_files,
+            "unpushed_commits": unpushed_commits
+        })
+    except subprocess.CalledProcessError as e:
+        return jsonify({"status": "error", "message": f"Git command failed: {str(e)}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+
 @app.route('/get_commits', methods=['GET'])
 def get_commits():
     try:
@@ -590,4 +631,4 @@ def delete_file():
 
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, debug = True)

@@ -302,6 +302,7 @@ function saveCurrentFile() {
     .then(data => {
         if (data.status === 'success') {
             showNotification('File saved successfully', 'success');
+            updateGitInfo(); 
         } else {
             showNotification('Error saving file: ' + data.message, 'error');
         }
@@ -676,8 +677,8 @@ function browseDirectory() {
                 console.log(data.current_path);
                 console.log(data.directories);
                 fetchDirectoryStructure();
-
                 updateDirectoryBrowser(data);
+                updateGitInfo();
             } else if (data.status === 'cancelled') {
                 console.log('Directory selection cancelled');
             } else {
@@ -1246,4 +1247,56 @@ function sendMessage() {
 
 
 
+function updateGitInfo() {
+    fetch('/git_info')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const gitStatusBar = document.getElementById('git-status-bar');
+                gitStatusBar.innerHTML = `
+                    <span title="Current Branch">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="6" y1="3" x2="6" y2="15"></line>
+                            <circle cx="18" cy="6" r="3"></circle>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <path d="M18 9a9 9 0 0 1-9 9"></path>
+                        </svg>
+                        ${data.branch}
+                    </span>
+                    <span title="Latest Commit">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <line x1="1.05" y1="12" x2="7" y2="12"></line>
+                            <line x1="17.01" y1="12" x2="22.96" y2="12"></line>
+                        </svg>
+                        ${data.commit}
+                    </span>
+                    <span title="Modified Files">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="18" x2="12" y2="12"></line>
+                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                        </svg>
+                        ${data.modified_files}
+                    </span>
+                    <span title="Unpushed Commits">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="19" x2="12" y2="5"></line>
+                            <polyline points="5 12 12 5 19 12"></polyline>
+                        </svg>
+                        ${data.unpushed_commits}
+                    </span>
+                `;
+            } else {
+                console.error('Failed to fetch Git info:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching Git info:', error);
+        });
+}
 
+
+
+document.addEventListener('DOMContentLoaded', updateGitInfo);
