@@ -1059,6 +1059,24 @@ body {
 }
 
 
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+.icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.icon-button svg {
+    width: 24px;
+    height: 24px;
+    color: #cdd6f4;  /* Adjust color to match your theme */
+}
+
+
 
 /* Catppuccin Mocha specific classes */
 .ctp-rosewater { color: var(--ctp-rosewater); }

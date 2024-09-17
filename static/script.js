@@ -1446,6 +1446,13 @@ function clearChatSession() {
     });
 }
 
+// Add this to your existing DOMContentLoaded event listener or create a new one
+document.addEventListener('DOMContentLoaded', function() {
+    const clearChatButton = document.getElementById('clear-chat-button');
+    if (clearChatButton) {
+        clearChatButton.addEventListener('click', clearChatSession);
+    }
+});
 
 
 document.addEventListener('DOMContentLoaded', updateGitInfo);
