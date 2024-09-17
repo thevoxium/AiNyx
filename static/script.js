@@ -859,7 +859,21 @@ document.addEventListener('DOMContentLoaded', () => {
 function showCommandPalette() {
     commandPalette.classList.remove('hidden');
     commandInput.focus();
+    
+    // Get the current selection from Monaco editor
+    const selection = editor.getSelection();
+    const selectedText = editor.getModel().getValueInRange(selection);
+    
+    // Store the selection for later use
+    commandPalette.dataset.selectionStartLineNumber = selection.startLineNumber;
+    commandPalette.dataset.selectionStartColumn = selection.startColumn;
+    commandPalette.dataset.selectionEndLineNumber = selection.endLineNumber;
+    commandPalette.dataset.selectionEndColumn = selection.endColumn;
+    commandPalette.dataset.selectedText = selectedText;
 }
+
+
+
 
 function hideCommandPalette() {
     commandPalette.classList.add('hidden');
@@ -874,7 +888,9 @@ function handleCommandInput(e) {
         commandList.innerHTML = '<li>Delete a file</li>';
     } else if (input.startsWith('r:')) {
         commandList.innerHTML = '<li>Rename a file</li>';
-    } else {
+    } else if (input.startsWith('prompt:')){
+        commandList.innerHTML = '<li>Get AI suggestion for selected code</li>';
+    }else{
         commandList.innerHTML = '';
     }
 }
@@ -893,8 +909,47 @@ function executeCommand(command) {
         } else {
             showNotification('Invalid rename command format. Use "r: old_path -> new_path"', 'error');
         }
+    }else if(command.toLowerCase().startsWith('prompt:')){
+        const prompt = command.slice(7).trim();
+        const selectedText = commandPalette.dataset.selectedText;
+        getAiSuggestion(prompt, selectedText);
     }
     hideCommandPalette();
+}
+
+
+function getAiSuggestion(prompt, selectedCode) {
+    fetch('/ai_suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt, code: selectedCode })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            replaceSelectedCode(data.suggestion);
+        } else {
+            showNotification('Error getting AI suggestion: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+function replaceSelectedCode(newCode) {
+    const startLineNumber = parseInt(commandPalette.dataset.selectionStartLineNumber);
+    const startColumn = parseInt(commandPalette.dataset.selectionStartColumn);
+    const endLineNumber = parseInt(commandPalette.dataset.selectionEndLineNumber);
+    const endColumn = parseInt(commandPalette.dataset.selectionEndColumn);
+
+    const range = new monaco.Range(startLineNumber, startColumn, endLineNumber, endColumn);
+    
+    editor.executeEdits('ai-suggestion', [{
+        range: range,
+        text: newCode,
+        forceMoveMarkers: true
+    }]);
 }
 
 

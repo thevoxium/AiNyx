@@ -343,6 +343,36 @@ def chat():
 
 
 
+
+
+@app.route('/ai_suggestion', methods=['POST'])
+def ai_suggestion():
+    data = request.json
+    prompt = data['prompt']
+    selected_code = data['code']
+    
+    try:
+        # Prepare the messages for the API call
+        messages = [
+            {"role": "system", "content": "You are an AI coding assistant. Provide code suggestions based on the given prompt and selected code. Only return the suggested code, without any explanations or markdown formatting."},
+            {"role": "user", "content": f"Prompt: {prompt}\n\nSelected Code:\n{selected_code}"}
+        ]
+        
+        response = client.chat.completions.create(
+            model="openai/gpt-4o-mini",  # You can change this to the desired model
+            messages=messages
+        )
+        
+        ai_suggestion = response.choices[0].message.content.strip()
+        
+        return jsonify({"status": "success", "suggestion": ai_suggestion})
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"status": "error", "message": str(e)})
+
+
+
+
 def get_current_directory():
     return session.get('current_directory', os.getcwd())
 
