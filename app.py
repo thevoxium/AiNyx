@@ -17,7 +17,7 @@ import re
 import json
 import shutil
 
-
+import anthropic
 from flask import send_from_directory
 
 
@@ -28,6 +28,11 @@ app.secret_key = 'your_secret_key_here'  # Replace with a real secret key
 
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
+
+api_key_anthropic = os.environ.get("ANTHROPIC")
+client_anthropic = anthropic.Anthropic(
+    api_key=api_key_anthropic,
+)
 
 
 
@@ -326,12 +331,26 @@ def chat():
     ] + chat_session['conversation_history']
     
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages
-        )
-        
-        ai_response = response.choices[0].message.content
+        if model == "anthropic/claude-3.5-sonnet":
+            response = client_anthropic.messages.create(
+                model="claude-3-sonnet-20240229",
+                max_tokens=10000,
+                temperature=0,
+                system="You are a helpful coding assistant. The user will provide you with code and questions about it. Always return your output in markdown so that i can correctly render it.",
+                messages=chat_session['conversation_history']
+            )
+        else:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages
+            )
+
+        ai_response = ""
+
+        if model == "anthropic/claude-3.5-sonnet":
+            ai_response = response.content[0].text
+        else:
+            ai_response = response.choices[0].message.content
         
         # Add the AI's response to the conversation history
         chat_session['conversation_history'].append({"role": "assistant", "content": ai_response})
