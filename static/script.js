@@ -673,14 +673,12 @@ function browseDirectory() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                console.log("updated directory recieved");
+                console.log("Updated directory received");
                 console.log(data.current_path);
                 console.log(data.directories);
                 fetchDirectoryStructure();
                 updateDirectoryBrowser(data);
                 updateGitInfo();
-            } else if (data.status === 'cancelled') {
-                console.log('Directory selection cancelled');
             } else {
                 showNotification('Error browsing directory: ' + data.message, 'error');
             }

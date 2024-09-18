@@ -13,8 +13,6 @@ import termios
 import struct
 import fcntl
 import logging
-import tkinter as tk
-from tkinter import filedialog
 import re
 import json
 import shutil
@@ -90,10 +88,9 @@ def index():
 
 @app.route('/browse_directory', methods=['GET'])
 def browse_directory():
-    root = tk.Tk()
-    root.withdraw()
-    directory = filedialog.askdirectory()
-    root.destroy()
+
+    directory = os.getcwd()
+
 
     if directory:
         try:
@@ -724,4 +721,4 @@ def rename_folder():
 initialize_chat_session()
 
 if __name__ == '__main__':
-    socketio.run(app, debug = True)
+    socketio.run(app, debug = True, port = 3000)
