@@ -24,29 +24,36 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem;
+    min-height: 100vh;
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    flex-direction: column;
+}
+
+.hero-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     min-height: 100vh;
 }
 
 .hero-content {
-    flex: 1;
-    padding-right: 4rem;
-    margin-top: 4rem;
+    max-width: 600px;
+    text-align: center;
     position: relative;
 }
 
 .hero-content::after {
     content: '';
     position: absolute;
-    top: 0;
+    top: -20%;
     left: -20%;
     width: 140%;
-    height: 100%;
+    height: 140%;
+    background: linear-gradient(45deg, var(--accent-color), var(--secondary-color));
     opacity: 0.05;
     z-index: -1;
     transform: skew(-15deg);
+    border-radius: 30px;
 }
 
 .logo {
@@ -65,12 +72,12 @@ p {
     font-size: 1rem;
     margin-bottom: 1.5rem;
     color: var(--text-color);
-    max-width: 80%;
 }
 
 .cta-buttons {
     display: flex;
     gap: 1rem;
+    justify-content: center;
     margin-bottom: 1.5rem;
 }
 
@@ -98,17 +105,19 @@ p {
     color: var(--bg-color);
 }
 
+.features-section {
+    margin-top: 4rem;
+}
+
 .features-grid {
-    width: 35%;
-    margin-top: 11.5rem;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
 }
 
 .feature-item {
     background-color: var(--feature-bg);
-    padding: 1rem;
+    padding: 1.5rem;
     border-radius: 8px;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -121,30 +130,20 @@ p {
 }
 
 .feature-item h3 {
-    font-size: 0.9rem;
-    margin-bottom: 0.3rem;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
     color: var(--accent-color);
 }
 
 .feature-item p {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     color: var(--text-color);
     opacity: 0.8;
-    margin-bottom: 0;
 }
 
 @media (max-width: 1024px) {
-    .container {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .hero-content {
-        padding-right: 0;
-        margin-bottom: 2rem;
-    }
     .features-grid {
-        width: 100%;
-        margin-top: 2rem;
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
