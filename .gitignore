@@ -1,2 +1,64 @@
-__pycache__/
-.editor_session/
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiNyx - The open source AI code editor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <main class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+                        <defs>
+                            <linearGradient id="outerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#a0b3ff;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#e0b1ff;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="50" r="50" fill="url(#outerGradient)" />
+                        <circle cx="50" cy="50" r="42" fill="#1a1b26" />
+                        <line x1="35" y1="35" x2="65" y2="65" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <h1>The open source<br>AI code editor.</h1>
+                <p>AiNyx is an open source Cursor alternative. Write code with the best AI tools, retain full control over your data, and access powerful AI features.</p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/thevoxium/ainyx" class="button primary">Star on GitHub</a>
+                    <a href="#" class="button secondary">Get Beta Version</a>
+                </div>
+            </div>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <h3>AI Assistant</h3>
+                    <p>Intelligent code suggestions</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Powerful Editor</h3>
+                    <p>Customizable interface</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Integrated Terminal</h3>
+                    <p>Execute commands easily</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Git Integration</h3>
+                    <p>Seamless version control</p>
+                </div>
+                <div class="feature-item">
+                    <h3>AI Chat</h3>
+                    <p>Get programming help</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Multi-language</h3>
+                    <p>Support for various languages</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
