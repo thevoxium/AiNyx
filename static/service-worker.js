@@ -1,4 +1,4 @@
-const CACHE_NAME = 'codenode-cache-v1';
+const CACHE_NAME = 'ainyx-cache-v1';
 const urlsToCache = [
   '/',
   '/static/styles.css',

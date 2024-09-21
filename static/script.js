@@ -1454,3 +1454,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 document.addEventListener('DOMContentLoaded', updateGitInfo);
+
+
+
+
+
+function showGitPushPopup() {
+    document.getElementById('git-push-popup').classList.remove('hidden');
+}
+
+function closeGitPushPopup() {
+    document.getElementById('git-push-popup').classList.add('hidden');
+}
+
+function executeGitPush() {
+    const commitMessage = document.getElementById('commit-message').value;
+    if (!commitMessage) {
+        showNotification('Please enter a commit message', 'error');
+        return;
+    }
+
+    fetch('/git_push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commit_message: commitMessage }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('Git push successful', 'success');
+            closeGitPushPopup();
+            updateGitInfo();  // Update the Git info display
+        } else {
+            showNotification('Git push failed: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+
+
+

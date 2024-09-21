@@ -7,7 +7,7 @@
   "theme_color": "#1e1e2e",
   "icons": [
     {
-      "src": "/static/cropped.jpg",
+      "src": "/static/cropped-modified.jpg",
       "sizes": "192x192",
       "type": "image/jpeg"
     }

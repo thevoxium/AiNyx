@@ -17,6 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs/loader.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='service-worker.js') }}"></script>
 </head>
 <body class="ctp-mocha">
     <div id="app">
@@ -25,14 +26,13 @@
                 <div id="current-path" class="ctp-overlay0"></div>
                 <div id="file-tree"></div>
             </div>
-            <div id="sidebar-footer">
-                 <button onclick="browseDirectory()" class="btn ctp-lavender tooltip" aria-label="cd :)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <span style="margin-top:2px">Change Directory</span>
-                </button>
-            </div>
+            <button onclick="showGitPushPopup()" class="btn ctp-lavender tooltip" aria-label="Git Push">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+                <span style="margin-top:2px">Git Push</span>
+            </button>
         </div>
 
         <div id="resizer-1" class="resizer"></div>
@@ -165,5 +165,17 @@
         <input type="text" id="command-input" placeholder="Type a command...">
         <ul id="command-list"></ul>
     </div>
+    <div id="git-push-popup" class="popup hidden">
+    <div class="popup-content">
+        <h2>Git Push</h2>
+        <textarea id="commit-message" placeholder="Enter commit message"></textarea>
+        <div class="popup-buttons">
+            <button onclick="executeGitPush()" class="popup-button push">Push</button>
+            <button onclick="closeGitPushPopup()" class="popup-button cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+</div>
+</div>
 </body>
 </html>

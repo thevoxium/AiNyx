@@ -335,7 +335,7 @@ def chat():
             response = client_anthropic.messages.create(
                 model="claude-3-sonnet-20240229",
                 temperature=0,
-                max_tokens = 10000,
+                max_tokens = 4096,
                 system="You are a helpful coding assistant. The user will provide you with code and questions about it. Always return your output in markdown so that i can correctly render it.",
                 messages=chat_session['conversation_history']
             )
@@ -739,5 +739,32 @@ def rename_folder():
 
 initialize_chat_session()
 
+
+@app.route('/git_push', methods=['POST'])
+def git_push():
+    try:
+        data = request.json
+        commit_message = data['commit_message']
+        
+        # Get the current directory
+        current_directory = session.get('current_directory', os.getcwd())
+        
+        # Execute Git commands
+        subprocess.run(['git', 'add', '.'], cwd=current_directory, check=True)
+        subprocess.run(['git', 'commit', '-m', commit_message], cwd=current_directory, check=True)
+        
+        # Get the current branch name
+        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], 
+                                         cwd=current_directory, text=True).strip()
+        
+        # Push to the current branch
+        subprocess.run(['git', 'push', 'origin', branch], cwd=current_directory, check=True)
+        
+        return jsonify({"status": "success", "message": "Git push completed successfully"})
+    except subprocess.CalledProcessError as e:
+        return jsonify({"status": "error", "message": f"Git command failed: {str(e)}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 if __name__ == '__main__':
-    socketio.run(app, debug = True, port = 3000)
+    socketio.run(app, debug = True, port = 5000)
