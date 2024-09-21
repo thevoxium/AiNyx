@@ -1038,10 +1038,18 @@ function replaceSelectedCode(newCode) {
 
 function showNotification(message, type) {
     console.log(`${type}: ${message}`);
-    // Implement a visual notification system here
+    const e = document.getElementById('notification');
+    e.innerText = message;
+    e.style.marginRight = "-50px";
+    e.style.color = "#a6e3a1"
 }
 
+function removeNotification(message, type) {
+    const e = document.getElementById('notification');
+    e.innerText = "";
+}
 
+setInterval(removeNotification, 5000);
 
 
 
