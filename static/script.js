@@ -912,6 +912,8 @@ function handleCommandInput(e) {
         commandList.innerHTML = '<li>Rename a folder</li>';
     } else if (input.startsWith('prompt:')){
         commandList.innerHTML = '<li>Get AI suggestion for selected code</li>';
+    } else if (input.startsWith('explain:')){
+        commandList.innerHTML = '<li>Get AI explaination for selected code</li>';
     } else {
         commandList.innerHTML = '';
     }
@@ -948,7 +950,11 @@ function executeCommand(command) {
         const prompt = command.slice(7).trim();
         const selectedText = commandPalette.dataset.selectedText;
         getAiSuggestion(prompt, selectedText);
-    }
+    }else if(command.toLowerCase().startsWith('explain:')){
+        const ex = command.slice(8).trim();
+        const selectedText = commandPalette.dataset.selectedText;
+        getAIExplaination(ex, selectedText);
+    } 
     hideCommandPalette();
 }
 
@@ -1009,6 +1015,26 @@ function renameFolder(oldPath, newPath) {
             fetchDirectoryStructure();  // Refresh the file tree
         } else {
             showNotification('Error renaming folder: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+
+function getAIExplaination(prompt, selectedCode) {
+    fetch('/ai_explaination', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt, code: selectedCode })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log(data.explaination);
+        } else {
+            showNotification('Error getting AI explaination: ' + data.message, 'error');
         }
     })
     .catch(error => {

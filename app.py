@@ -381,6 +381,35 @@ def initialize_chat_session():
 
 
 
+
+
+@app.route('/ai_explaination', methods=['POST'])
+def ai_explaination():
+    data = request.json
+    prompt = data['prompt']
+    selected_code = data['code']
+    
+    try:
+        # Prepare the messages for the API call
+        messages = [
+            {"role":"system", "content": "You are an AI coding assistant, you are provided with a piece of code, you need to explain the code and what is happening in it, try to keep the explaination short."},
+            {"role": "user", "content": f"Prompt: {prompt}\n\nSelected Code:\n{selected_code}"}
+        ]
+        
+        response = client.chat.completions.create(
+            model="openai/gpt-4o-mini",  # You can change this to the desired model
+            messages=messages
+        )
+        
+        ai_explaination = response.choices[0].message.content.strip()
+        
+        return jsonify({"status": "success", "explaination": ai_explaination})
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"status": "error", "message": str(e)})
+
+
+
 @app.route('/ai_suggestion', methods=['POST'])
 def ai_suggestion():
     data = request.json
