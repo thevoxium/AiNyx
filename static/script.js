@@ -450,6 +450,17 @@ function toggleChat() {
         editor.layout();
     }
 }
+document.addEventListener('keydown', function(event){
+  if(event.ctrlKey && event.key == 'k'){
+    const sidebarContainer = document.getElementById("sidebar");
+    if (sidebarContainer.style.display === "none"){
+      sidebarContainer.style.display = "flex";
+    }else{
+      sidebarContainer.style.display = "none";
+    }
+  }
+});
+
 
 function handleChatInputKeypress(e) {
     console.log("hello");
