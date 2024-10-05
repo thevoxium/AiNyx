@@ -331,7 +331,7 @@ def chat():
     ] + chat_session['conversation_history']
     
     try:
-        if model == "anthropic/claude-3.5-sonnet":
+        if model == "":
             response = client_anthropic.messages.create(
                 model="claude-3-sonnet-20240229",
                 temperature=0,
@@ -347,7 +347,7 @@ def chat():
 
         ai_response = ""
 
-        if model == "anthropic/claude-3.5-sonnet":
+        if model == "":
             ai_response = response.content[0].text
         else:
             ai_response = response.choices[0].message.content
