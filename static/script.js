@@ -1547,4 +1547,57 @@ function executeGitPush() {
 
 
 
+// Simple Pomodoro Timer with Alerts
+let timer;
+let timeLeft = 25 * 60; // 25 minutes in seconds
+let isWorkSession = true;
+let isRunning = false;
 
+function togglePomodoro() {
+    if (isRunning) {
+        stopPomodoro();
+    } else {
+        startPomodoro();
+    }
+}
+
+function startPomodoro() {
+    if (timer) {
+        clearInterval(timer);
+    }
+
+    isRunning = true;
+    showNotification("Pomodoro timer started. 25-minute work session begins now.");
+
+    timer = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+        } else {
+            clearInterval(timer);
+            if (isWorkSession) {
+                showNotification("25-minute work session complete! 5-minute break starts now.");
+                timeLeft = 5 * 60; // 5 minutes break
+                isWorkSession = false;
+            } else {
+                showNotification("5-minute break over! 25-minute work session starts now.");
+                timeLeft = 25 * 60; // 25 minutes work session
+                isWorkSession = true;
+            }
+            startPomodoro(); // Automatically start the next session
+        }
+    }, 1000);
+}
+
+function stopPomodoro() {
+    clearInterval(timer);
+    isRunning = false;
+    showNotification("Pomodoro timer stopped.");
+}
+
+// Event listener for Ctrl+T
+document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.key === 't') {
+        event.preventDefault(); // Prevent default browser behavior
+        togglePomodoro();
+    }
+});
