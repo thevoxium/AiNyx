@@ -1,2 +1,3 @@
 .editor_session/
-__pycache__
+__pycache__/
+*.pyc
