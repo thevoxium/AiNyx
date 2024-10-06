@@ -920,7 +920,9 @@ function handleCommandInput(e) {
         commandList.innerHTML = '<li>Get AI suggestion for selected code</li>';
     } else if (input.startsWith('explain:')){
         commandList.innerHTML = '<li>Get AI explaination for selected code</li>';
-    } else {
+    } else if (input.startsWith('refactor:')){
+        commandList.innerHTML = '<li>Get AI powered refactoring</li>';
+    }else {
         commandList.innerHTML = '';
     }
 }
@@ -960,7 +962,11 @@ function executeCommand(command) {
         const ex = command.slice(8).trim();
         const selectedText = commandPalette.dataset.selectedText;
         getAIExplaination(ex, selectedText);
-    } 
+    }else if(command.toLowerCase().startsWith('refactor:')){
+        const ex = command.slice(9).trim();
+        const selectedText = commandPalette.dataset.selectedText;
+        getAiRefactoring(selectedText);
+    }
     hideCommandPalette();
 }
 
@@ -1080,6 +1086,25 @@ function getAiSuggestion(prompt, selectedCode) {
             replaceSelectedCode(data.suggestion);
         } else {
             showNotification('Error getting AI suggestion: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+function getAiRefactoring(selectedCode) {
+    fetch('/ai_refactoring', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: "", code: selectedCode })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            replaceSelectedCode(data.refactor);
+        } else {
+            showNotification('Error getting AI refactoring: ' + data.message, 'error');
         }
     })
     .catch(error => {

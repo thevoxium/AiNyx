@@ -410,7 +410,34 @@ def ai_explaination():
 
 
 
-@app.route('/ai_suggestion', methods=['POST'])
+@app.route('/ai_refactoring', methods=['POST'])
+def ai_refactoring():
+    data = request.json
+    prompt = data['prompt']
+    selected_code = data['code']
+    
+    try:
+        # Prepare the messages for the API call
+        messages = [
+                {"role": "system", "content": "You are given a piece of code. You need to refactor it. Do not change any functionality. Double check your response. It is very important that you output correct refactored code. Only output the code, nothing else like text or markdown formatting is required. Your response should have nothing except code."},
+            {"role": "user", "content": f"Prompt: {prompt}\n\nSelected Code:\n{selected_code}"}
+        ]
+        
+        response = client.chat.completions.create(
+            model="openai/gpt-4o-mini",  # You can change this to the desired model
+            messages=messages
+        )
+        
+        ai_suggestion = response.choices[0].message.content.strip()
+        
+        return jsonify({"status": "success", "refactor": ai_suggestion})
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"status": "error", "message": str(e)})
+
+
+
+app.route('/ai_suggestion', methods=['POST'])
 def ai_suggestion():
     data = request.json
     prompt = data['prompt']
