@@ -1038,9 +1038,9 @@ function getAIExplaination(prompt, selectedCode) {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            console.log(data.explaination);
+            showExplanationModal(data.explaination);
         } else {
-            showNotification('Error getting AI explaination: ' + data.message, 'error');
+            showNotification('Error getting AI explanation: ' + data.message, 'error');
         }
     })
     .catch(error => {
@@ -1048,6 +1048,24 @@ function getAIExplaination(prompt, selectedCode) {
     });
 }
 
+function showExplanationModal(explanation) {
+    const modal = document.getElementById('explanationModal');
+    const modalContent = document.getElementById('modalContent');
+
+    modalContent.innerHTML = marked.parse(explanation);
+    modal.style.display = 'flex';
+
+    // Close the modal when clicking outside of it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+}
 
 
 function getAiSuggestion(prompt, selectedCode) {

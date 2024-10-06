@@ -1160,8 +1160,86 @@ body {
     display: none !important;
 }
 
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(30, 30, 46, 0.4); /* Catppuccin Mocha background with opacity */
+    justify-content: center;
+    align-items: center;
+}
 
 
+.modal-content {
+    background-color: #1e1e2e; /* Catppuccin Mocha background */
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 80%;
+    max-height: 80%;
+    overflow-y: auto;
+    color: #cdd6f4; /* Catppuccin Mocha text */
+    font-family: 'Fira Code', monospace; /* A popular coding font */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+#modalContent {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #d8d8d8;
+}
+
+#modalContent h1, #modalContent h2, #modalContent h3, #modalContent h4, #modalContent h5, #modalContent h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+#modalContent code {
+    background-color: rgba(27,31,35,.05);
+    border-radius: 3px;
+    font-size: 85%;
+    margin: 0;
+    padding: .2em .4em;
+}
+
+#modalContent pre {
+    background-color: #f6f8fa;
+    border-radius: 3px;
+    font-size: 85%;
+    line-height: 1.45;
+    overflow: auto;
+    padding: 16px;
+}
+
+#modalContent blockquote {
+    border-left: .25em solid #dfe2e5;
+    color: #6a737d;
+    padding: 0 1em;
+}
+
+#modalContent ul, #modalContent ol {
+    padding-left: 2em;
+}
+
+#modalContent table {
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+#modalContent table th, #modalContent table td {
+    border: 1px solid #dfe2e5;
+    padding: 6px 13px;
+}
+
+#modalContent table tr:nth-child(2n) {
+    background-color: #f6f8fa;
+}
 /* Catppuccin Mocha specific classes */
 .ctp-rosewater { color: var(--ctp-rosewater); }
 .ctp-flamingo { color: var(--ctp-flamingo); }
