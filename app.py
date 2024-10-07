@@ -16,7 +16,7 @@ import logging
 import re
 import json
 import shutil
-
+from pylint.lint import Run
 import anthropic
 from flask import send_from_directory
 
@@ -821,6 +821,83 @@ def git_push():
         return jsonify({"status": "error", "message": f"Git command failed: {str(e)}"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+
+
+from pylint.lint import Run
+from pylint.reporters.text import TextReporter
+from io import StringIO
+import re
+from collections import Counter
+
+def process_pylint_output(pylint_output):
+    # Extract the overall rating
+    rating_match = re.search(r'Your code has been rated at (\d+\.\d+)/10', pylint_output)
+    rating = float(rating_match.group(1)) if rating_match else 0.0
+
+    # Extract all issues
+    issues = re.findall(r'^.+?:\d+:\d+: (\w+): (.+) \((.+)\)$', pylint_output, re.MULTILINE)
+
+    # Count issue types
+    issue_types = Counter(issue[0] for issue in issues)
+
+    # Get top 5 most common issues
+    top_issues = issue_types.most_common(5)
+
+    # Count total issues
+    total_issues = len(issues)
+
+    return {
+        'rating': rating,
+        'total_issues': total_issues,
+        'top_issues': top_issues,
+        'issue_types': dict(issue_types)
+    }
+
+@app.route('/analyze_readability', methods=['POST'])
+def analyze_readability():
+    data = request.json
+    code = data['code']
+    
+    # Create a temporary file to store the code
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+        temp_file.write(code)
+        temp_file_path = temp_file.name
+
+    try:
+        pylint_output = StringIO()  # Create a StringIO object to capture the output
+        reporter = TextReporter(pylint_output)  # Create a reporter that writes to our StringIO object
+        
+        # Run pylint with our custom reporter
+        Run(['--disable=line-too-long', temp_file_path], reporter=reporter,exit=False)
+        
+        # Get the output as a string
+        output_string = pylint_output.getvalue()
+        
+        # Process the output
+        useful_results = process_pylint_output(output_string)
+        
+        print("Processed pylint results:")
+        print(useful_results)
+
+        return jsonify({
+            'status': 'success',
+            'score': useful_results['rating'],
+            'top_issues': useful_results['top_issues'],
+            'total_issues': useful_results['total_issues']
+        })
+    
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f"An error occurred while analyzing the code: {str(e)}"
+        })
+    
+    finally:
+        # Clean up the temporary file
+        os.unlink(temp_file_path)
+
 
 if __name__ == '__main__':
     socketio.run(app, debug = True, port = 5000)

@@ -1650,3 +1650,33 @@ document.addEventListener('keydown', function(event) {
         togglePomodoro();
     }
 });
+
+
+
+setInterval(analyzeReadability, 10000);
+            
+                        
+function analyzeReadability() {
+    const currentCode = editor.getValue();
+    
+    fetch('/analyze_readability', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: currentCode }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+          console.log("Your file is rated:")
+          console.log(data.score)
+        } else {
+          console.log("Error fetching code score")
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while analyzing code readability', 'error');
+    });
+}
