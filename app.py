@@ -834,7 +834,7 @@ def process_pylint_output(pylint_output):
     # Extract the overall rating
     rating_match = re.search(r'Your code has been rated at (\d+\.\d+)/10', pylint_output)
     rating = float(rating_match.group(1)) if rating_match else 0.0
-
+    # TODO: add regex to get the correct messages too
     # Extract all issues
     issues = re.findall(r'^.+?:\d+:\d+: (\w+): (.+) \((.+)\)$', pylint_output, re.MULTILINE)
 
